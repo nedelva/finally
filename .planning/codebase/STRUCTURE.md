@@ -138,6 +138,12 @@ finally/
 - Contains: 6 modules, utility functions for frontend app
 - Status: Scaffolding only — frontend components not yet implemented
 
+**Frontend Components (`frontend/components/`)**:
+
+- Purpose: React components for the terminal UI
+- Contains (as of Phase 01 Plan 04): `Watchlist.tsx` (grid container), `WatchlistRow.tsx` (pure-props row), `Sparkline.tsx` (Recharts mini-chart)
+- Status: First components landed; directory created this plan (previously listed as "not yet created")
+
 **Frontend Output (`frontend/out/`)**:
 
 - Purpose: Static HTML/JS export from Next.js build
