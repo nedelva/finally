@@ -69,33 +69,43 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MKT-01 | TBD | Pending |
-| MKT-02 | TBD | Pending |
-| MKT-03 | TBD | Pending |
-| MKT-04 | TBD | Pending |
-| MKT-05 | TBD | Pending |
-| PORT-01 | TBD | Pending |
-| PORT-02 | TBD | Pending |
-| PORT-03 | TBD | Pending |
-| PORT-04 | TBD | Pending |
-| PORT-05 | TBD | Pending |
-| PORT-06 | TBD | Pending |
-| WTCH-01 | TBD | Pending |
-| WTCH-02 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| CHAT-03 | TBD | Pending |
-| CHAT-04 | TBD | Pending |
-| CHAT-05 | TBD | Pending |
-| CHAT-06 | TBD | Pending |
-| OPS-01 | TBD | Pending |
-| OPS-02 | TBD | Pending |
+| MKT-01 | Phase 1 | Pending |
+| MKT-02 | Phase 1 | Pending |
+| MKT-03 | Phase 1 | Pending |
+| MKT-04 | Phase 1 | Pending |
+| MKT-05 | Phase 1 | Pending |
+| PORT-01 | Phase 3 | Pending |
+| PORT-02 | Phase 3 | Pending |
+| PORT-03 | Phase 3 | Pending |
+| PORT-04 | Phase 3 | Pending |
+| PORT-05 | Phase 3 | Pending |
+| PORT-06 | Phase 3 | Pending |
+| WTCH-01 | Phase 2 | Pending |
+| WTCH-02 | Phase 2 | Pending |
+| CHAT-01 | Phase 4 | Pending |
+| CHAT-02 | Phase 4 | Pending |
+| CHAT-03 | Phase 4 | Pending |
+| CHAT-04 | Phase 4 | Pending |
+| CHAT-05 | Phase 4 | Pending |
+| CHAT-06 | Phase 4 | Pending |
+| OPS-01 | Phase 5 | Pending |
+| OPS-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 21 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 21 ⚠️ (expected — roadmapper fills this next)
+- Mapped to phases: 21 ✓
+- Unmapped: 0
+
+**By phase:**
+
+| Phase | Requirements | Count |
+|-------|--------------|-------|
+| 1. Live Price Terminal | MKT-01, MKT-02, MKT-03, MKT-04, MKT-05 | 5 |
+| 2. Persistent Watchlist | WTCH-01, WTCH-02 | 2 |
+| 3. Trading & Portfolio | PORT-01, PORT-02, PORT-03, PORT-04, PORT-05, PORT-06 | 6 |
+| 4. AI Copilot | CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06 | 6 |
+| 5. One-Command Delivery | OPS-01, OPS-02 | 2 |
 
 ---
 *Requirements defined: 2026-09-17*
-*Last updated: 2026-09-17 after initial definition*
+*Last updated: 2026-09-17 after roadmap creation (traceability mapped)*
