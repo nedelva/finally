@@ -186,7 +186,11 @@ class TestSSEStream:
 
     async def test_empty_cache_version_gating_delivers_once_populated(self):
         update = PriceUpdate(
-            ticker="AAPL", price=190.00, previous_price=190.00, timestamp=1234567890.0
+            ticker="AAPL",
+            price=190.00,
+            previous_price=190.00,
+            session_open_price=190.00,
+            timestamp=1234567890.0,
         )
         stub = _StubCache(update)
         router = create_stream_router(stub, interval=0.01)
