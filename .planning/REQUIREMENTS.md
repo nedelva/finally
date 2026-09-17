@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 
 ### Market Data
 
-- [ ] **MKT-01**: User sees a watchlist of 10 default tickers with live-updating prices in a grid, streamed via SSE
-- [ ] **MKT-02**: Prices flash green (uptick) or red (downtick) with a fading CSS animation on change
-- [ ] **MKT-03**: User sees a sparkline mini-chart beside each watchlist ticker, accumulated from the SSE stream since page load
+- [x] **MKT-01**: User sees a watchlist of 10 default tickers with live-updating prices in a grid, streamed via SSE
+- [x] **MKT-02**: Prices flash green (uptick) or red (downtick) with a fading CSS animation on change
+- [x] **MKT-03**: User sees a sparkline mini-chart beside each watchlist ticker, accumulated from the SSE stream since page load
 - [ ] **MKT-04**: User can click a ticker in the watchlist to see a larger detailed price chart in the main chart area
 - [ ] **MKT-05**: Header shows a colored connection-status dot (green/yellow/red) reflecting SSE connection state, with automatic reconnection on disconnect
 
@@ -69,9 +69,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MKT-01 | Phase 1 | Pending |
-| MKT-02 | Phase 1 | Pending |
-| MKT-03 | Phase 1 | Pending |
+| MKT-01 | Phase 1 | Complete |
+| MKT-02 | Phase 1 | Complete |
+| MKT-03 | Phase 1 | Complete |
 | MKT-04 | Phase 1 | Pending |
 | MKT-05 | Phase 1 | Pending |
 | PORT-01 | Phase 3 | Pending |
@@ -92,6 +92,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPS-02 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 21 total
 - Mapped to phases: 21 ✓
 - Unmapped: 0
