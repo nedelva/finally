@@ -169,3 +169,7 @@ None - no external service configuration required.
 ---
 *Phase: 01-live-price-terminal*
 *Completed: 2026-09-17*
+
+## Self-Check: PASSED
+
+All 11 created files verified present on disk (frontend config/app/test files + this SUMMARY.md). All 4 commits (`1eed9c5`, `29dc069`, `e7c4caa`, `32dbf4d`) verified present in git history.
