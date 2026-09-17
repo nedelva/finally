@@ -31,7 +31,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Each watchlist row carries a sparkline that fills in progressively as prices arrive after load
   4. Clicking a ticker in the watchlist draws a larger price chart for that ticker in the main chart area
   5. The header shows a connection dot that is green while streaming, changes colour when the stream drops, and returns to green by itself once the browser reconnects
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Repair the `.gitignore` rule blocking `frontend/lib/`, author the missing Next.js scaffold, and stand up the Vitest harness
+- [ ] 01-02-PLAN.md — TRACER / Walking Skeleton: FastAPI entrypoint, lifespan-managed market data, SSE, single-port static serving, and one shared browser stream
+- [ ] 01-03-PLAN.md — Backend hardening: the four CONCERNS.md repairs plus the first SSE integration tests
+- [ ] 01-04-PLAN.md — Watchlist grid with price-flash animation and progressively-filling sparklines
+- [ ] 01-05-PLAN.md — Header connection dot, click-driven main chart, and end-of-phase browser verification
+
 **UI hint**: yes
 
 **Scope notes** (work with no REQ ID that must land here):
@@ -129,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live Price Terminal | 0/TBD | Not started | - |
+| 1. Live Price Terminal | 0/5 | Planned | - |
 | 2. Persistent Watchlist | 0/TBD | Not started | - |
 | 3. Trading & Portfolio | 0/TBD | Not started | - |
 | 4. AI Copilot | 0/TBD | Not started | - |
