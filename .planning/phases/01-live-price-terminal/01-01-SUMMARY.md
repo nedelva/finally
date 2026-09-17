@@ -16,7 +16,8 @@ affects: [01-02, 01-03, all-later-frontend-plans]
 actuals:
   tokens: 62117
   tasks: 3
-  commits: 3
+  commits: 5
+  plan_head_before: 54727155721d7caafceea53e3426dcff7fbdbae3
 
 tech-stack:
   added: [next@16.3.5, react@19.2.8, react-dom@19.2.8, recharts@3.10.1, typescript@5.9.3, tailwindcss@4.3.3, "@tailwindcss/postcss@4.3.3", vitest@5.0.1, jsdom@30.1.0, "@testing-library/react@16.3.3", "@testing-library/jest-dom@7.0.1", "@vitejs/plugin-react@6.1.1"]
