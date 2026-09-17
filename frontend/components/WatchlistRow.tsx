@@ -9,11 +9,12 @@ import type { PriceTick } from "@/lib/types";
 import type { PricePoint } from "@/lib/usePriceStream";
 import { usePriceFlash } from "@/lib/usePriceFlash";
 import { formatPercent, formatPrice } from "@/lib/format";
+import { Sparkline } from "./Sparkline";
 
 export interface WatchlistRowProps {
   ticker: string;
   tick?: PriceTick;
-  /** Sparkline data source — accepted here, rendered by the Sparkline cell added in plan 01-04 Task 2. */
+  /** Sparkline data source — the hook already caps this at PRICE_HISTORY_LIMIT; no second cap here. */
   history?: PricePoint[];
 }
 
@@ -32,7 +33,7 @@ function changeColorClass(changePercent: number | null | undefined): string {
   return "text-gray-400";
 }
 
-export function WatchlistRow({ ticker, tick }: WatchlistRowProps) {
+export function WatchlistRow({ ticker, tick, history = [] }: WatchlistRowProps) {
   const flashClass = usePriceFlash(tick?.price);
 
   return (
@@ -49,6 +50,9 @@ export function WatchlistRow({ ticker, tick }: WatchlistRowProps) {
         className={`py-1.5 pr-4 tabular-nums ${changeColorClass(tick?.change_percent)}`}
       >
         {formatPercent(tick?.change_percent, { sign: true })}
+      </td>
+      <td data-testid={`sparkline-${ticker}`} className="py-1.5 pr-3">
+        <Sparkline data={history} width={80} height={24} />
       </td>
     </tr>
   );
