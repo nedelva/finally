@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Live Price Terminal
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-09-17T20:19:43.867Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-09-17T20:49:47.509Z"
 last_activity: 2026-09-17
 last_activity_desc: Phase 01 execution started
-state_head: e7c4caae76223cd552d692a8c8bfca2400d06eed
+state_head: 64ff6737776c2d9afd108382541640b42870fe77
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-17)
 ## Current Position
 
 Phase: 01 (Live Price Terminal) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-09-17 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 20min | 3 tasks | 19 files |
+| Phase 01 P02 | 28min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Full PLAN.md §7 schema (including `positions`, `trades`, `portfolio_snapshots`, `chat_messages`) is created in Phase 2, avoiding a second schema pass later.
 - [Phase 01]: Anchored .gitignore lib/ rule to repo root (/lib/) rather than adding a negation line — Narrower single-character fix per plan's explicit instruction; leaves no second rule to reason about
 - [Phase 01]: Accepted Next.js build-time tsconfig.json auto-correction (jsx: preserve -> react-jsx) — Next 16 Turbopack mandates react-jsx for the App Router's automatic JSX runtime; fighting it would break the build
+- [Phase 01]: SSE integration test drives app.main's own module-level app via a real bound uvicorn server (not httpx.ASGITransport/TestClient, which fully drain streaming responses and deadlock on this endpoint's disconnect-only generator)
+- [Phase 01]: Confirmed the pre-existing stream.py module-level router singleton (CONCERNS.md) causes a second create_app() call in-process to silently route to the wrong, unstarted PriceCache -- worked around in the test without touching stream.py, left for plan 01-03 to fix
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-17T20:19:43.853Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-09-17T20:49:47.495Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
