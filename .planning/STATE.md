@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Live Price Terminal
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-09-17T20:49:47.509Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-09-17T21:05:09.617Z"
 last_activity: 2026-09-17
 last_activity_desc: Phase 01 execution started
-state_head: 64ff6737776c2d9afd108382541640b42870fe77
+state_head: 95b473ef9ebeacec439912f820fc7e2b3f88a769
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-17)
 ## Current Position
 
 Phase: 01 (Live Price Terminal) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-09-17 — Phase 01 execution started
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 20min | 3 tasks | 19 files |
 | Phase 01 P02 | 28min | 2 tasks | 10 files |
+| Phase 01 P03 | 13min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Accepted Next.js build-time tsconfig.json auto-correction (jsx: preserve -> react-jsx) — Next 16 Turbopack mandates react-jsx for the App Router's automatic JSX runtime; fighting it would break the build
 - [Phase 01]: SSE integration test drives app.main's own module-level app via a real bound uvicorn server (not httpx.ASGITransport/TestClient, which fully drain streaming responses and deadlock on this endpoint's disconnect-only generator)
 - [Phase 01]: Confirmed the pre-existing stream.py module-level router singleton (CONCERNS.md) causes a second create_app() call in-process to silently route to the wrong, unstarted PriceCache -- worked around in the test without touching stream.py, left for plan 01-03 to fix
+- [Phase 01]: SSE tests against the endless generator use a real bound uvicorn.Server, never httpx.ASGITransport/TestClient — ASGITransport fully drains the response body before returning anything, deadlocking on this disconnect-only generator; confirmed empirically, matching 01-02's identical finding for test_main.py
+- [Phase 01]: PriceUpdate splits previous_price (direction/flash) from a new session_open_price (change/change_percent) — One field cannot serve both the tick-to-tick flash trigger and the daily-style watchlist percentage; to_dict()'s seven-key shape is unchanged so no frontend type changes are required
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-17T20:49:47.495Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-09-17T21:05:09.602Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Clicking a ticker in the watchlist draws a larger price chart for that ticker in the main chart area
   5. The header shows a connection dot that is green while streaming, changes colour when the stream drops, and returns to green by itself once the browser reconnects
 
-**Plans**: 2/5 plans executed
+**Plans**: 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -48,7 +48,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Backend hardening: the four CONCERNS.md repairs plus the first SSE integration tests
+- [x] 01-03-PLAN.md — Backend hardening: the four CONCERNS.md repairs plus the first SSE integration tests
 - [ ] 01-04-PLAN.md — Watchlist grid with price-flash animation and progressively-filling sparklines
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -169,7 +169,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live Price Terminal | 2/5 | In Progress|  |
+| 1. Live Price Terminal | 3/5 | In Progress|  |
 | 2. Persistent Watchlist | 0/TBD | Not started | - |
 | 3. Trading & Portfolio | 0/TBD | Not started | - |
 | 4. AI Copilot | 0/TBD | Not started | - |
