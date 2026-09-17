@@ -7,6 +7,7 @@ FinAlly starts from a solid but unwired market-data subsystem: a pluggable simul
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
@@ -21,28 +22,43 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Live Price Terminal
+
 **Goal**: The user opens `http://localhost:8000` and watches the 10 default tickers stream live prices in a dark, Bloomberg-style terminal — making the already-built market-data engine visible for the first time
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: MKT-01, MKT-02, MKT-03, MKT-04, MKT-05
 **Success Criteria** (what must be TRUE):
+
   1. User loads the app at `http://localhost:8000` and sees a watchlist grid of the 10 default tickers whose prices update continuously without any manual refresh
   2. A ticker's price flashes green on an uptick and red on a downtick, fading back to normal within roughly half a second
   3. Each watchlist row carries a sparkline that fills in progressively as prices arrive after load
   4. Clicking a ticker in the watchlist draws a larger price chart for that ticker in the main chart area
   5. The header shows a connection dot that is green while streaming, changes colour when the stream drops, and returns to green by itself once the browser reconnects
+
 **Plans**: 5 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Repair the `.gitignore` rule blocking `frontend/lib/`, author the missing Next.js scaffold, and stand up the Vitest harness
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-02-PLAN.md — TRACER / Walking Skeleton: FastAPI entrypoint, lifespan-managed market data, SSE, single-port static serving, and one shared browser stream
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 01-03-PLAN.md — Backend hardening: the four CONCERNS.md repairs plus the first SSE integration tests
 - [ ] 01-04-PLAN.md — Watchlist grid with price-flash animation and progressively-filling sparklines
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 01-05-PLAN.md — Header connection dot, click-driven main chart, and end-of-phase browser verification
 
 **UI hint**: yes
 
 **Scope notes** (work with no REQ ID that must land here):
+
 - Create the missing FastAPI entrypoint (`app = FastAPI()`) with a lifespan that builds the `PriceCache`, calls `create_market_data_source`, starts the background task on startup and stops it on shutdown; add `GET /api/health`.
 - Serve the Next.js static export from FastAPI via `StaticFiles` — the same single-origin, single-port mechanism Phase 5 will package, so every later phase exercises the production serving path.
 - Ticker list for this phase comes from the market module's default seed list; Phase 2 replaces it with the database-backed watchlist.
@@ -50,19 +66,23 @@ Plans:
 - Add the missing SSE integration tests (ASGI client): event delivery, version-change detection, client disconnect.
 
 ### Phase 2: Persistent Watchlist
+
 **Goal**: The user controls which tickers they watch, and that choice — along with the rest of the app's state — now lives in a real SQLite database instead of memory
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: WTCH-01, WTCH-02
 **Success Criteria** (what must be TRUE):
+
   1. User adds a ticker (e.g. PYPL) through the watchlist control and it appears in the grid and starts streaming prices within seconds
   2. User removes a ticker and it disappears from the grid and stops receiving updates
   3. Reloading the browser shows the user's own watchlist, not the built-in default list
   4. A malformed or empty ticker entry is rejected with a visible message and leaves the watchlist unchanged
+
 **Plans**: TBD
 **UI hint**: yes
 
 **Scope notes** (work with no REQ ID that must land here):
+
 - Lazy database initialization on first request per PLAN.md §7: create `db/finally.db` if absent and build the full schema — `users_profile`, `watchlist`, `positions`, `trades`, `portfolio_snapshots`, `chat_messages` — all carrying `user_id` defaulting to `"default"`. Seed one profile with `cash_balance=10000.0` and the ten default tickers. The later tables are created here even though Phases 3-4 are the first to write to them; that avoids a second schema pass.
 - Implement `GET /api/watchlist`, `POST /api/watchlist`, `DELETE /api/watchlist/{ticker}`.
 - Swap the Phase 1 hardcoded ticker list for `GET /api/watchlist` — the watchlist panel is modified, not rebuilt.
@@ -71,40 +91,48 @@ Plans:
 - Cash balance display stays out of this phase — it belongs to PORT-01 in Phase 3.
 
 ### Phase 3: Trading & Portfolio
+
 **Goal**: The user can buy and sell shares at the live streaming price and watch a $10,000 portfolio respond — cash, holdings, P&L, weight, and value over time
 **Mode:** mvp
 **Depends on**: Phase 2
 **Requirements**: PORT-01, PORT-02, PORT-03, PORT-04, PORT-05, PORT-06
 **Success Criteria** (what must be TRUE):
+
   1. Header shows $10,000 cash on a fresh database, and total portfolio value moves live as streamed prices change
   2. User enters a ticker and quantity in the trade bar and buys: the order fills instantly at the current price with no confirmation dialog, cash drops by exactly the fill amount, and the position appears
   3. User sells: cash rises, the position shrinks or disappears, and an attempt to sell more shares than owned or buy beyond available cash is refused with a visible error and no change to cash or positions
   4. Positions table shows ticker, quantity, average cost, current price, unrealized P&L, and % change for every holding, with price-driven values updating live
   5. Portfolio heatmap sizes each position by weight and colours it green for profit or red for loss, and the P&L chart shows total portfolio value over time, gaining new points as time passes and immediately after each trade
+
 **Plans**: TBD
 **UI hint**: yes
 
 **Scope notes** (work with no REQ ID that must land here):
+
 - Implement `GET /api/portfolio` (positions, cash, total value, unrealized P&L), `POST /api/portfolio/trade` (`{ticker, quantity, side}`, market order, instant fill, fractional shares, validated against cash and holdings), and `GET /api/portfolio/history`.
 - Trade execution reads the fill price from `PriceCache`, writes an append-only `trades` row, and upserts the `positions` row with recomputed average cost.
 - Background task writes a `portfolio_snapshots` row every 30 seconds and immediately after each executed trade — both the periodic and the post-trade path are required for PORT-06 to look right.
 - This is the heaviest phase; expect `/gsd-plan-phase` to split it into several plans rather than splitting the phase (a presentation-only slice would break the vertical-MVP rule).
 
 ### Phase 4: AI Copilot
+
 **Goal**: The user talks to FinAlly in natural language and it answers from their actual portfolio and acts on it — placing trades and editing the watchlist without leaving the conversation
 **Mode:** mvp
 **Depends on**: Phase 3
 **Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06
 **Success Criteria** (what must be TRUE):
+
   1. User sends a message in the chat panel, sees a loading indicator, and receives a conversational reply that references their real cash, holdings, P&L, and current watchlist prices
   2. Asking the assistant to buy or sell executes the trade with no approval step; a confirmation appears inline in the conversation and cash and positions update to match
   3. Asking the assistant to add or remove a ticker changes the watchlist, with the change confirmed inline in the conversation
   4. A request the portfolio cannot support (buying beyond available cash, selling shares not held) produces a conversational explanation of the failure and leaves cash, positions, and watchlist untouched
   5. Reloading the browser restores the prior conversation history
+
 **Plans**: TBD
 **UI hint**: yes
 
 **Scope notes** (work with no REQ ID that must land here):
+
 - Implement `POST /api/chat`: load portfolio context + watchlist with live prices + recent `chat_messages`, call the model, auto-execute returned actions, persist the exchange, return one complete JSON response (no token streaming).
 - LLM access follows the project's `cerebras` skill exactly: LiteLLM `completion` against `openrouter/openai/gpt-oss-120b` with `extra_body={"provider": {"order": ["cerebras"]}}`, structured outputs validated through a Pydantic model matching PLAN.md §9 (`message`, `trades[]`, `watchlist_changes[]`). Requires `litellm` and `pydantic` added to the uv project and `OPENROUTER_API_KEY` loaded from `.env`.
 - AI-initiated trades reuse the exact Phase 3 validation path — no second, looser execution route.
@@ -112,18 +140,22 @@ Plans:
 - Malformed or non-conforming model output must degrade into a readable assistant message rather than a 500.
 
 ### Phase 5: One-Command Delivery
+
 **Goal**: Someone who has never seen the repo runs one command and gets the whole workstation on port 8000, with their portfolio and history still there after a restart
 **Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: OPS-01, OPS-02
 **Success Criteria** (what must be TRUE):
+
   1. From a clean checkout with a `.env`, the operator runs the provided start script (or the documented `docker run`) and reaches the complete, working application at `http://localhost:8000`
   2. Trades, watchlist edits, and chat history made before stopping the container are all still present after starting it again
   3. Start and stop scripts are safe to run repeatedly — no duplicate containers, no error on a second stop, and stopping never destroys the data volume
   4. The application runs correctly with only `OPENROUTER_API_KEY` set, falling back to the built-in simulator because no Massive key is present
+
 **Plans**: TBD
 
 **Scope notes** (work with no REQ ID that must land here):
+
 - Multi-stage `Dockerfile` per PLAN.md §11: Node 20 builds the frontend static export, Python 3.12 + uv installs the backend from the lockfile and receives the built assets; single uvicorn process on port 8000.
 - `scripts/start_mac.sh`, `scripts/stop_mac.sh`, `scripts/start_windows.ps1`, `scripts/stop_windows.ps1`, all idempotent; named volume mounted at `/app/db`; optional `docker-compose.yml` convenience wrapper.
 - Commit `.env.example` (`OPENROUTER_API_KEY`, `MASSIVE_API_KEY`, `LLM_MOCK`) — currently missing entirely.
