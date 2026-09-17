@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/*
+ * FinAlly design tokens — Tailwind v4 is CSS-first: custom utilities/colors
+ * are declared here via @theme, NOT in a tailwind.config.ts (which v4
+ * ignores). Palette fixed by planning/PLAN.md §2; everything else derived
+ * to fit a dense, dark trading-terminal aesthetic.
+ */
+@theme {
+  /* Surfaces — never pure black, three depths for panel layering */
+  --color-void: #0d1117; /* page background */
+  --color-panel: #131820; /* primary panel surface */
+  --color-panel-raised: #1a1a2e; /* chat sidebar / raised surface */
+  --color-hairline: #262c3a; /* muted gray borders */
+  --color-hairline-strong: #333b4d;
+
+  /* Ink */
+  --color-ink-primary: #e6edf3;
+  --color-ink-secondary: #9aa7b8;
+  --color-ink-muted: #6b7688;
+
+  /* Brand accents — fixed by PLAN.md */
+  --color-accent-yellow: #ecad0a;
+  --color-accent-blue: #209dd7;
+  --color-accent-purple: #753991;
+
+  /* Status / delta — domain convention (green=up/profit, red=down/loss).
+   * Paired with numeric +/- and glyphs everywhere, never color alone. */
+  --color-positive: #3fb950;
+  --color-positive-dim: #1c3a24;
+  --color-negative: #f85149;
+  --color-negative-dim: #3d1e1e;
+  --color-neutral: #6b7688;
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains), "SFMono-Regular", Consolas, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-void);
+  color: var(--color-ink-primary);
+  font-family: var(--font-sans);
+}
+
+/* Tabular numerals for anything price/quantity-shaped so grid columns align —
+ * a functional terminal convention, not decoration. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* Price flash — brief highlight fading over ~500ms, then removed by JS.
+ * Applied as a transient class alongside the base cell styling. */
+@keyframes flash-up {
+  from {
+    background-color: var(--color-positive-dim);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes flash-down {
+  from {
+    background-color: var(--color-negative-dim);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.flash-up {
+  animation: flash-up 550ms ease-out;
+}
+.flash-down {
+  animation: flash-down 550ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down {
+    animation: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-hairline-strong);
+  border-radius: 4px;
+}

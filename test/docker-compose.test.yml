@@ -1,0 +1,17 @@
+services:
+  finally:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: finally:e2e
+    container_name: finally-app-e2e
+    ports:
+      - "8010:8000"
+    volumes:
+      - finally-data-e2e:/app/db
+    environment:
+      - LLM_MOCK=true
+    restart: "no"
+
+volumes:
+  finally-data-e2e:

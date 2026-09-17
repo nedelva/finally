@@ -1,0 +1,29 @@
+# Never bake local virtualenvs / node_modules into the image, and never let a `COPY backend/`
+# or `COPY frontend/` overwrite the venv / node_modules a build stage just installed.
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+
+# Frontend build output (rebuilt fresh in Stage 1; a stale local copy shouldn't leak in)
+frontend/out
+frontend/.next
+
+# Runtime data / secrets — never belong in an image layer
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm
+.env
+.env.*
+!.env.example
+
+# VCS / editor / misc
+.git
+.gitignore
+.github
+.claude
+*.md
+!README.md
