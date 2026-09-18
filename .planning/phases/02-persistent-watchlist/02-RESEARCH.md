@@ -692,12 +692,12 @@ export interface WatchlistResponse {
 | A4 | Health check and future portfolio/chat routers can stay out of a barrel `app/api/__init__.py` for now, adding just `watchlist_router` | Recommended Project Structure | Low — purely organizational; `/api/health` staying inline in `main.py` (as Phase 1 left it) vs. moving into `app/api/` is a style choice with no functional impact |
 | A5 | Indexes (`CREATE_INDEXES` in Pattern 1) are worth adding now even though PLAN.md §7 doesn't specify them | Pattern 1 | Low — additive, does not conflict with §7's column specs, and costs nothing at this data scale; purely a forward-looking convenience for Phase 3/4's per-user queries |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `GET /api/watchlist`'s initial load show a loading/skeleton state?**
+1. **Should `GET /api/watchlist`'s initial load show a loading/skeleton state?** — RESOLVED: no.
    - What we know: UI-SPEC marks this a "backstop" (🧪) state — "no skeleton/spinner is specified by default... if latency is measurable, a loading treatment is needed and this assumption is wrong" (`.planning/phases/02-persistent-watchlist/02-UI-SPEC.md:125`).
    - What's unclear: whether a local SQLite read is fast enough in practice to avoid any visible flicker on first paint.
-   - Recommendation: build without a loading state first (matches UI-SPEC's default); the executor should visually confirm no flicker during phase verification, per the UI-SPEC's own held-out note.
+   - **Resolution:** build without a loading state first (matches UI-SPEC's default backstop assumption); this is a held-out check, not an unresolved design gap — the executor must visually confirm no flicker during phase verification, and if a flicker is observed, that is new information overturning this resolution, not evidence the question was never decided.
 
 ## Environment Availability
 
