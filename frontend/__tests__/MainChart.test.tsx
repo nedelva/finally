@@ -61,11 +61,12 @@ describe("WatchlistRow selection", () => {
     expect(onSelect).toHaveBeenCalledWith("AAPL");
   });
 
-  it("carries a button role and a tab index for keyboard activation", () => {
+  it("keeps native row semantics and carries a tab index for keyboard activation", () => {
     renderRow({ ticker: "AAPL" });
     const row = screen.getByTestId("row-AAPL");
 
-    expect(row).toHaveAttribute("role", "button");
+    expect(row).not.toHaveAttribute("role");
+    expect(row.tagName).toBe("TR");
     expect(row).toHaveAttribute("tabindex", "0");
   });
 

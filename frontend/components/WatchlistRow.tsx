@@ -59,7 +59,6 @@ export function WatchlistRow({
   return (
     <tr
       data-testid={`row-${ticker}`}
-      role="button"
       tabIndex={0}
       aria-selected={selected}
       onClick={select}
