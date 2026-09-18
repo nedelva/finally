@@ -159,3 +159,79 @@ class TestAddWatchlist:
         client.post("/api/watchlist", json={"ticker": "AA$PL"})
 
         assert fake_market_source.added == []
+
+
+class TestRemoveWatchlist:
+    """`DELETE /api/watchlist/{ticker}` — remove the row and stop the ticker streaming."""
+
+    def test_remove_present_ticker_returns_204_with_empty_body(self, client):
+        # AAPL is one of the ten seeded default tickers.
+        response = client.delete("/api/watchlist/AAPL")
+
+        assert response.status_code == 204
+        assert response.content == b""
+
+    def test_remove_present_ticker_disappears_from_a_subsequent_get(self, client):
+        client.delete("/api/watchlist/AAPL")
+
+        tickers = {entry["ticker"] for entry in client.get("/api/watchlist").json()["watchlist"]}
+        assert "AAPL" not in tickers
+
+    def test_remove_notifies_market_source_with_the_normalized_ticker_exactly_once(
+        self, client, fake_market_source
+    ):
+        client.delete("/api/watchlist/AAPL")
+
+        assert fake_market_source.removed == ["AAPL"]
+
+    def test_remove_lowercase_path_segment_removes_the_uppercase_ticker(
+        self, client, fake_market_source
+    ):
+        response = client.delete("/api/watchlist/aapl")
+
+        assert response.status_code == 204
+        assert fake_market_source.removed == ["AAPL"]
+
+    def test_remove_absent_ticker_returns_404_with_an_error_key(self, client):
+        response = client.delete("/api/watchlist/ZZZZ")
+
+        assert response.status_code == 404
+        assert "error" in response.json()
+
+    def test_remove_absent_ticker_does_not_change_row_count(self, client):
+        before = len(client.get("/api/watchlist").json()["watchlist"])
+        client.delete("/api/watchlist/ZZZZ")
+        after = len(client.get("/api/watchlist").json()["watchlist"])
+
+        assert after == before
+
+    def test_remove_absent_ticker_does_not_notify_market_source(
+        self, client, fake_market_source
+    ):
+        client.delete("/api/watchlist/ZZZZ")
+
+        assert fake_market_source.removed == []
+
+    def test_remove_twice_returns_404_and_changes_nothing_on_the_second_call(self, client):
+        first = client.delete("/api/watchlist/AAPL")
+        before = client.get("/api/watchlist").json()["watchlist"]
+
+        second = client.delete("/api/watchlist/AAPL")
+        after = client.get("/api/watchlist").json()["watchlist"]
+
+        assert first.status_code == 204
+        assert second.status_code == 404
+        assert before == after
+
+    def test_remove_does_not_touch_positions_trades_snapshots_or_chat_messages(self, client):
+        from app.db.connection import get_connection
+
+        client.delete("/api/watchlist/AAPL")
+
+        conn = get_connection()
+        try:
+            for table in ("positions", "trades", "portfolio_snapshots", "chat_messages"):
+                count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                assert count == 0, f"expected 0 rows in {table}, found {count}"
+        finally:
+            conn.close()

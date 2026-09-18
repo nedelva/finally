@@ -1,8 +1,8 @@
-"""Tests for `app.db.repository.add_watchlist_ticker`."""
+"""Tests for `app.db.repository.add_watchlist_ticker`/`remove_watchlist_ticker`."""
 
 import pytest
 
-from app.db import add_watchlist_ticker, get_watchlist
+from app.db import add_watchlist_ticker, get_watchlist, remove_watchlist_ticker
 
 
 class TestAddWatchlistTicker:
@@ -37,3 +37,35 @@ class TestAddWatchlistTicker:
 
         rows = [row for row in get_watchlist() if row["ticker"] == "PYPL"]
         assert len(rows) == 1
+
+
+class TestRemoveWatchlistTicker:
+    """Synchronous repository-level tests against a freshly-seeded database."""
+
+    def test_remove_deletes_the_row_and_returns_true(self, initialized_db):
+        add_watchlist_ticker("PYPL")
+
+        result = remove_watchlist_ticker("PYPL")
+
+        assert result is True
+        assert "PYPL" not in {row["ticker"] for row in get_watchlist()}
+
+    def test_remove_absent_ticker_returns_false(self, initialized_db):
+        result = remove_watchlist_ticker("ZZZZ")
+
+        assert result is False
+
+    def test_remove_absent_ticker_does_not_change_row_count(self, initialized_db):
+        before = len(get_watchlist())
+        remove_watchlist_ticker("ZZZZ")
+        after = len(get_watchlist())
+
+        assert after == before
+
+    def test_remove_twice_returns_false_on_the_second_call(self, initialized_db):
+        add_watchlist_ticker("PYPL")
+        remove_watchlist_ticker("PYPL")
+
+        result = remove_watchlist_ticker("PYPL")
+
+        assert result is False

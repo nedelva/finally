@@ -61,3 +61,11 @@ def add_watchlist_ticker(ticker: str) -> dict:
     finally:
         conn.close()
     return {"ticker": ticker, "added_at": added_at}
+
+
+def remove_watchlist_ticker(ticker: str) -> bool:
+    """Delete a watchlist row for the current user.
+
+    RED-phase stub — implemented in the following GREEN commit.
+    """
+    raise NotImplementedError
