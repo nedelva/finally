@@ -37,7 +37,7 @@ function makeEntry(ticker: string): WatchlistEntry {
 
 function mockUseWatchlist(
   entries: WatchlistEntry[],
-  refetch: ReturnType<typeof vi.fn> = vi.fn(),
+  refetch: () => Promise<void> = vi.fn(async () => {}),
 ) {
   vi.mocked(useWatchlist).mockReturnValue({
     watchlist: entries,
