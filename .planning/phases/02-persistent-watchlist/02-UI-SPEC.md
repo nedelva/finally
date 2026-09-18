@@ -1,7 +1,7 @@
 ---
 phase: "2"
 slug: "persistent-watchlist"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-09-18"
@@ -106,17 +106,31 @@ Backend-owned error strings (empty/malformed/duplicate) should follow the exact 
 
 ## UI Considerations
 
-Applicable state considerations resolved: 7 covered, 1 backstop, 0 unresolved.
+> Ran via the compiled ui-consideration-probe against three elements: add-ticker form (`form`),
+> watchlist grid (`list-collection`), remove affordance (`interactive-control`) — see
+> `.claude/gsd-core/references/ui-consideration-probe.md`. Kind classification was corrected from
+> the heuristic's first pass (which over-broadened the remove affordance to nearly every category
+> via "watchlist" keyword cues) before resolving, per the propose-then-confirm step.
+
+Applicable state considerations resolved: 9 covered, 5 backstop, 0 unresolved.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| empty | watchlist grid (0 tickers) | ✅ covered | Renders the "Watchlist is empty" / "Add a ticker above..." copy from the Copywriting Contract in place of the table body; the add-ticker form itself always stays visible above it. |
+| empty | add-ticker form (unfilled) | ✅ covered | The input starts empty with placeholder copy "Add ticker (e.g. PYPL)" per the Copywriting Contract; no state beyond the placeholder is needed for an unfilled single-field form. |
 | loading | add-ticker submit | ✅ covered | Submit button shows disabled state with label "Adding…" while the `POST /api/watchlist` request is in flight; input is disabled for the same duration to prevent duplicate submits. |
 | error | add-ticker validation | ✅ covered | Inline error text rendered directly below the add-ticker form row (not a toast), using the four copy variants in the Copywriting Contract; persists until the next submit attempt or successful add. |
+| partial | add-ticker form (partial fields) | ✅ covered | Not applicable — dismissed: the form has exactly one field (the ticker input), so no multi-field partial-completion state exists to design for. |
+| long-text | ticker input value | ✅ covered | No client-side `maxLength` cap — an over-length or symbol-laden entry must reach the server and come back through the "isn't a valid ticker" error path (success criterion 4 requires the rejection message to actually fire, not be silently prevented by an input constraint). |
+| empty | watchlist grid (0 tickers) | ✅ covered | Renders the "Watchlist is empty" / "Add a ticker above..." copy from the Copywriting Contract in place of the table body; the add-ticker form itself always stays visible above it. |
+| loading | watchlist grid (initial `GET /api/watchlist` fetch) | 🧪 backstop | Not designed as a distinct state — `GET /api/watchlist` is a local SQLite read expected to resolve near-instantly, so no skeleton/spinner is specified by default. Held-out: the executor must confirm no visible flicker occurs; if latency is measurable, a loading treatment is needed and this assumption is wrong. |
+| error | watchlist grid (`GET /api/watchlist` failure) | 🧪 backstop | No grid-level error state is specified (distinct from the add-ticker form's own error copy above). Held-out: reuse the existing `ApiResult` failure pattern from `lib/api.ts` if this path is ever exercised; no dedicated visual has been designed and none exists to verify against yet. |
 | populated | watchlist grid (1-N tickers) | ✅ covered | Existing Phase 1 table rendering, unchanged; new remove-affordance column added per row. |
-| zero-one-many | watchlist size | ✅ covered | 0 → empty state above; 1-N → existing table layout, no column reflow between 1 and many rows. |
-| overflow | ticker input value | ✅ covered | No client-side `maxLength` cap — an over-length or symbol-laden entry must reach the server and come back through the same "isn't a valid ticker" error path (success criterion 4 requires the rejection message to actually fire, not be silently prevented by an input constraint). |
-| long-text | ticker input value | ✅ covered | Same reasoning as overflow — a pasted long string is allowed to submit and is rejected server-side with a visible message rather than truncated client-side. |
+| partial | watchlist grid (newly-added row, pre-first-tick) | ✅ covered | A newly added ticker's row appears via the post-add `GET /api/watchlist` refetch before its first SSE price tick arrives. This reuses Phase 1's existing per-cell empty/loading treatment for price and sparkline cells (already designed for progressive fill-in from page load) — no new state is introduced. |
+| overflow | watchlist grid (many tickers vs. panel height) | 🧪 backstop | This phase adds no server-side max-watchlist-size cap, so the list can grow past what a Phase-1-sized panel comfortably fits. No scroll/clip/wrap decision is specified here. Held-out: if the panel does not already scroll internally, this needs a follow-up design decision before the list can grow unbounded in practice. |
+| zero-one-many | watchlist grid size | ✅ covered | 0 → empty state above; 1-N → existing table layout, no column reflow between 1 and many rows. |
+| loading | remove affordance (click) | ✅ covered | "Clicking removes immediately" (Copywriting Contract, Destructive confirmation row) — the zero-friction/no-confirmation design already establishes that no separate loading affordance is shown for the remove action. |
+| error | remove affordance (`DELETE` failure) | 🧪 backstop | No UI treatment is specified for a failed `DELETE /api/watchlist/{ticker}` (e.g., does the row stay, revert, or show an inline error?). Held-out: not covered by an existing pattern; flagged for the executor to decide and for a future test to confirm. |
+| long-text | remove affordance glyph | ✅ covered | Not applicable — dismissed: the affordance renders a fixed Unicode glyph (`×`), never variable-length or user-generated text, so no long-text state applies. |
 | zero-one-many | remove interaction vs. row-select | 🧪 backstop | Clicking the remove glyph inside a `WatchlistRow` must call `event.stopPropagation()` so it does not also fire the row's existing `onSelect` (MKT-04 click-to-chart behavior) — held-out visual/interaction check, no existing test covers a nested-clickable-inside-clickable-row case yet. |
 
 ---
@@ -140,12 +154,12 @@ Not applicable — `Tool: none`, no shadcn or third-party registry used this pha
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-18
