@@ -67,6 +67,17 @@ export function WatchlistRow({
     onRemove?.(ticker);
   };
 
+  // Mirrors handleRemoveClick's stopPropagation, but for keyboard
+  // activation: the <tr>'s onKeyDown (Enter/Space -> select()) is attached
+  // via React's delegated bubbling, so pressing Enter/Space while focused on
+  // this button would otherwise both fire the button's native click-like
+  // activation (-> onRemove) *and* bubble up to fire the row's select() —
+  // stopping propagation here keeps the two mutually exclusive, matching the
+  // click behavior above.
+  const handleRemoveKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
   return (
     <tr
       data-testid={`row-${ticker}`}
@@ -100,6 +111,7 @@ export function WatchlistRow({
           data-testid={`remove-${ticker}`}
           aria-label={`Remove ${ticker} from watchlist`}
           onClick={handleRemoveClick}
+          onKeyDown={handleRemoveKeyDown}
           className="text-sm text-[var(--color-down)]"
         >
           ×

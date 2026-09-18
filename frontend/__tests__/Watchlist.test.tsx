@@ -267,6 +267,30 @@ describe("WatchlistRow remove affordance", () => {
 
     expect(onSelect).toHaveBeenCalledWith("AAPL");
   });
+
+  it("does not fire the row's onSelect when the remove button is activated via keyboard", async () => {
+    // Regression test for WR-02: the <tr>'s onKeyDown (Enter/Space ->
+    // select()) is attached via React's delegated bubbling, so pressing
+    // Enter/Space while focused on the nested remove button used to also
+    // fire the row's select() unless the button itself stopped propagation.
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onRemove = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <WatchlistRow ticker="AAPL" onSelect={onSelect} onRemove={onRemove} />
+        </tbody>
+      </table>,
+    );
+
+    const button = screen.getByTestId("remove-AAPL");
+    button.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onRemove).toHaveBeenCalledWith("AAPL");
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });
 
 describe("Watchlist", () => {
