@@ -1,5 +1,7 @@
 """Tests for GBMSimulator."""
 
+import numpy as np
+
 from app.market.seed_prices import SEED_PRICES
 from app.market.simulator import GBMSimulator
 
@@ -88,6 +90,54 @@ class TestGBMSimulator:
         """Test that Cholesky is None with only one ticker."""
         sim = GBMSimulator(tickers=["AAPL"])
         assert sim._cholesky is None
+
+    def test_rebuild_cholesky_falls_back_to_none_on_linalg_error(self, monkeypatch):
+        """WR-03 regression: a non-positive-definite correlation matrix must
+        not leave `_cholesky` stale/wrongly-shaped relative to `_tickers`.
+
+        `_add_ticker_internal` always runs before `_rebuild_cholesky` in
+        `add_ticker`, so by the time Cholesky decomposition is attempted,
+        `_tickers` already has n entries. If the decomposition raised
+        unguarded here, `_cholesky` would keep its old (n-1)-dimensional (or
+        None) value while `_tickers` has n entries — the next `step()` would
+        shape-mismatch `self._cholesky @ z_independent` and raise every tick
+        thereafter. Monkeypatching `np.linalg.cholesky` to always raise
+        `LinAlgError` simulates that failure without needing to construct an
+        actual non-positive-definite correlation matrix.
+        """
+        monkeypatch.setattr(
+            np.linalg,
+            "cholesky",
+            lambda *args, **kwargs: (_ for _ in ()).throw(np.linalg.LinAlgError("boom")),
+        )
+        sim = GBMSimulator(tickers=["AAPL"])
+
+        sim.add_ticker("GOOGL")  # would raise unguarded; must not propagate
+
+        assert sim._cholesky is None
+        assert sim._tickers == ["AAPL", "GOOGL"]
+        # step() must not shape-mismatch against the fallback None cholesky.
+        result = sim.step()
+        assert set(result.keys()) == {"AAPL", "GOOGL"}
+
+    def test_step_after_failed_cholesky_rebuild_does_not_raise(self, monkeypatch):
+        """WR-03 regression, end-to-end: repeated step() calls after a failed
+        rebuild must keep producing prices for every ticker rather than
+        silently halting (the bug's original symptom, per the review)."""
+        monkeypatch.setattr(
+            np.linalg,
+            "cholesky",
+            lambda *args, **kwargs: (_ for _ in ()).throw(np.linalg.LinAlgError("boom")),
+        )
+        sim = GBMSimulator(tickers=["AAPL"])
+        sim.add_ticker("GOOGL")
+        sim.add_ticker("MSFT")
+
+        for _ in range(5):
+            result = sim.step()
+            assert set(result.keys()) == {"AAPL", "GOOGL", "MSFT"}
+            for price in result.values():
+                assert price > 0
 
     def test_get_price_returns_none_for_unknown(self):
         """Test that get_price returns None for unknown ticker."""
