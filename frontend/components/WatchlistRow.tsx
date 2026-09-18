@@ -5,6 +5,7 @@
 // each ticker's tick/history down, so this component never opens a stream
 // connection of its own and stays directly testable without a provider.
 
+import type { KeyboardEvent } from "react";
 import type { PriceTick } from "@/lib/types";
 import type { PricePoint } from "@/lib/usePriceStream";
 import { usePriceFlash } from "@/lib/usePriceFlash";
@@ -16,6 +17,10 @@ export interface WatchlistRowProps {
   tick?: PriceTick;
   /** Sparkline data source — the hook already caps this at PRICE_HISTORY_LIMIT; no second cap here. */
   history?: PricePoint[];
+  /** Called with this row's ticker on click or Enter/Space keyboard activation (MKT-04). */
+  onSelect?: (ticker: string) => void;
+  /** Whether this row is the currently selected ticker in the main chart. */
+  selected?: boolean;
 }
 
 /**
@@ -33,11 +38,36 @@ function changeColorClass(changePercent: number | null | undefined): string {
   return "text-gray-400";
 }
 
-export function WatchlistRow({ ticker, tick, history = [] }: WatchlistRowProps) {
+export function WatchlistRow({
+  ticker,
+  tick,
+  history = [],
+  onSelect,
+  selected = false,
+}: WatchlistRowProps) {
   const flashClass = usePriceFlash(tick?.price);
 
+  const select = () => onSelect?.(ticker);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      select();
+    }
+  };
+
   return (
-    <tr className="border-b border-[var(--color-border)]/60 last:border-b-0">
+    <tr
+      data-testid={`row-${ticker}`}
+      role="button"
+      tabIndex={0}
+      aria-selected={selected}
+      onClick={select}
+      onKeyDown={handleKeyDown}
+      className={`cursor-pointer border-b border-[var(--color-border)]/60 last:border-b-0 focus:outline-none ${
+        selected ? "bg-[var(--color-border)]/40" : ""
+      }`}
+    >
       <td className="py-1.5 pl-3 pr-4 font-medium text-gray-200">{ticker}</td>
       <td
         data-testid={`price-${ticker}`}

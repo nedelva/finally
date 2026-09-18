@@ -8,7 +8,14 @@
 import { usePriceStreamContext } from "@/lib/PriceStreamContext";
 import { WatchlistRow } from "./WatchlistRow";
 
-export function Watchlist() {
+export interface WatchlistProps {
+  /** Currently selected ticker, driving the main chart (MKT-04). Owned by page.tsx. */
+  selectedTicker?: string;
+  /** Called with a row's ticker on click or keyboard activation. */
+  onSelect?: (ticker: string) => void;
+}
+
+export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
   const { ticks, history, tickers } = usePriceStreamContext();
 
   return (
@@ -23,7 +30,14 @@ export function Watchlist() {
       </thead>
       <tbody>
         {tickers.map((ticker) => (
-          <WatchlistRow key={ticker} ticker={ticker} tick={ticks[ticker]} history={history[ticker]} />
+          <WatchlistRow
+            key={ticker}
+            ticker={ticker}
+            tick={ticks[ticker]}
+            history={history[ticker]}
+            selected={ticker === selectedTicker}
+            onSelect={onSelect}
+          />
         ))}
       </tbody>
     </table>

@@ -192,6 +192,11 @@ describe("Watchlist", () => {
       );
     });
 
-    expect(screen.getAllByRole("row")).toHaveLength(tickers.length + 1); // + header row
+    // Body rows carry role="button" (WatchlistRow, plan 01-05, MKT-04
+    // keyboard-activatable selection) which overrides their implicit "row"
+    // role, so the header row is the only remaining "row"-role element and
+    // the ten body rows are queried as buttons instead.
+    expect(screen.getAllByRole("row")).toHaveLength(1); // header row only
+    expect(screen.getAllByRole("button")).toHaveLength(tickers.length);
   });
 });
