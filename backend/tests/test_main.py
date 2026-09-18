@@ -82,27 +82,16 @@ class TestLifespanSSE:
     singleton through a real, bound server — the exact object `uvicorn
     app.main:app` serves in production.
 
-    Two subtleties forced this shape, discovered while writing this test:
-
-    1. `create_stream_router()` decorates its `/prices` handler onto a
-       *module-level* `APIRouter` singleton in `stream.py` (the defect
-       CONCERNS.md documents and plan 01-03 repairs — not touched here).
-       Building a second, throwaway app via `create_app()` in this same
-       process registers a second handler on that shared router; Starlette
-       dispatches by registration order, so whichever app was built *first*
-       always wins for `/api/stream/prices` — which is this module's own
-       `app` object, constructed the moment this test file imports
-       `app.main`. Driving that exact object (instead of a fresh
-       `create_app()` instance) is the only way this test observes real
-       data, and it is also the more faithful proof: it exercises the
-       literal ASGI target Phase 5's container `CMD` runs.
-    2. `httpx.ASGITransport` (and Starlette's `TestClient`, built on the same
-       mechanism) fully drains an ASGI app's response body before returning
-       anything to the caller — fine for ordinary request/response
-       endpoints, but this SSE generator only terminates on client
-       disconnect, so both transports deadlock on it. A real, bound uvicorn
-       server plus a real-socket `httpx.AsyncClient` streams incrementally,
-       exactly as a browser's `EventSource` would.
+    `httpx.ASGITransport` (and Starlette's `TestClient`, built on the same
+    mechanism) fully drains an ASGI app's response body before returning
+    anything to the caller — fine for ordinary request/response endpoints,
+    but this SSE generator only terminates on client disconnect, so both
+    transports deadlock on it. A real, bound uvicorn server plus a
+    real-socket `httpx.AsyncClient` streams incrementally, exactly as a
+    browser's `EventSource` would. Driving the module-level `app` object
+    (instead of a fresh `create_app()` instance) also makes this the more
+    faithful proof: it exercises the literal ASGI target Phase 5's
+    container `CMD` runs.
     """
 
     async def test_first_frame_contains_all_default_tickers(self):
