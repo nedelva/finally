@@ -493,6 +493,41 @@ describe("Page selection guard on watchlist removal", () => {
     await waitFor(() => expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument());
   });
 
+  it("settles into a stable empty state, without an infinite selection loop, when the last ticker is removed after it has already streamed a price", async () => {
+    // Regression test for CR-01: `tickers` (SSE-derived) only ever grows,
+    // while `watchlistTickers` (REST-derived) can shrink to empty. A prior
+    // two-effect implementation ping-ponged forever in exactly this
+    // sequence — select a ticker that has already ticked over SSE, then
+    // remove it as the watchlist's last entry — because the "auto-select
+    // first available" effect kept re-selecting it from the still-nonempty
+    // `tickers` set. A regressed version would throw "Maximum update depth
+    // exceeded" here rather than resolve this waitFor.
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    mockUseWatchlist([makeEntry("AAPL")]);
+
+    const { rerender } = render(<Page />);
+
+    const source = FakeEventSource.instances[0];
+    act(() => {
+      source.fireMessage({ AAPL: makeTick("AAPL", 190.0) });
+    });
+
+    await user.click(screen.getByTestId("row-AAPL"));
+    expect(screen.getByTestId("row-AAPL")).toHaveAttribute("aria-selected", "true");
+
+    mockUseWatchlist([]);
+    rerender(<Page />);
+
+    await waitFor(() => expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument());
+    // Give any residual ping-pong a chance to surface before asserting the
+    // final state is durable, not merely transiently reached.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument();
+  });
+
   it("does not change the selection when the selected ticker is still in the watchlist", async () => {
     const user = userEvent.setup();
     // @ts-expect-error -- test double, not a full EventSource implementation

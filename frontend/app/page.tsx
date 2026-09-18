@@ -12,31 +12,29 @@ function Terminal() {
   const { watchlist } = useWatchlist();
   const [selectedTicker, setSelectedTicker] = useState<string | undefined>(undefined);
 
-  // Auto-select the first available ticker once the stream reports at least
-  // one, so the chart area is never empty after prices arrive. An explicit
-  // click (setSelectedTicker below, via Watchlist's onSelect) always wins
-  // afterward — this effect only fires while nothing is selected yet.
+  // Keeps the chart selection valid across two independent, differently
+  // shaped ticker sources: `tickers` (SSE-derived, monotonically grows —
+  // never shrinks even when a ticker is removed from the watchlist) and
+  // `watchlistTickers` (REST-derived, the source of truth for membership,
+  // which *can* shrink to empty on removal). A single effect derives the
+  // target from both with matching precedence, rather than two separate
+  // effects — a prior two-effect version could enter a permanent ping-pong
+  // loop: removing the last ticker cleared the selection (via the
+  // watchlist-membership guard), which the "auto-select first available"
+  // guard then immediately re-populated from the never-shrinking `tickers`
+  // set, which the membership guard then cleared again, forever. The single
+  // guard here checks watchlist membership directly, so "no valid
+  // selection" can never re-trigger a selection of a ticker outside the
+  // current watchlist.
   useEffect(() => {
-    if (!selectedTicker && tickers.length > 0) {
-      setSelectedTicker(tickers[0]);
+    const watchlistTickers = watchlist.map((entry) => entry.ticker);
+    const validSelection = selectedTicker && watchlistTickers.includes(selectedTicker);
+    if (validSelection) return;
+    const fallback = watchlistTickers.find((t) => tickers.includes(t)) ?? watchlistTickers[0];
+    if (fallback !== selectedTicker) {
+      setSelectedTicker(fallback);
     }
-  }, [selectedTicker, tickers]);
-
-  // Clear a stale selection when the charted ticker leaves the watchlist.
-  // The grid's membership comes from useWatchlist() (REST), which can
-  // shrink on removal — unlike the SSE-derived `tickers` set above, which
-  // only ever grows. Without this, removing the currently-charted ticker
-  // would leave MainChart frozen on stale data with no live updates and no
-  // explanation. Deliberately a separate effect from the one above: their
-  // guards (`!selectedTicker` vs. `selectedTicker && not in the watchlist`)
-  // are mutually exclusive by design, so merging them would obscure that
-  // only one of the two can ever apply on a given render.
-  const watchlistTickers = watchlist.map((entry) => entry.ticker);
-  useEffect(() => {
-    if (selectedTicker && !watchlistTickers.includes(selectedTicker)) {
-      setSelectedTicker(watchlistTickers[0]);
-    }
-  }, [selectedTicker, watchlistTickers]);
+  }, [selectedTicker, watchlist, tickers]);
 
   return (
     <main className="flex min-h-screen flex-col gap-4 p-8">
