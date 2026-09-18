@@ -1,9 +1,10 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import Page from "@/app/page";
 import { Watchlist } from "@/components/Watchlist";
 import { WatchlistRow } from "@/components/WatchlistRow";
-import { addWatchlistTicker } from "@/lib/api";
+import { addWatchlistTicker, removeWatchlistTicker } from "@/lib/api";
 import { PriceStreamProvider } from "@/lib/PriceStreamContext";
 import { useWatchlist } from "@/lib/hooks";
 import type { PriceTick, WatchlistEntry } from "@/lib/types";
@@ -18,9 +19,11 @@ vi.mock("@/lib/hooks", () => ({
 
 // Second, independent mock (of lib/api rather than lib/hooks) — the
 // add-ticker form calls addWatchlistTicker() directly, not through a hook,
-// so each test controls its resolved/rejected ApiResult independently.
+// so each test controls its resolved/rejected ApiResult independently. The
+// remove affordance (02-03) calls removeWatchlistTicker() the same way.
 vi.mock("@/lib/api", () => ({
   addWatchlistTicker: vi.fn(),
+  removeWatchlistTicker: vi.fn(),
 }));
 
 function makeEntry(ticker: string): WatchlistEntry {
@@ -207,6 +210,65 @@ describe("WatchlistRow", () => {
   });
 });
 
+describe("WatchlistRow remove affordance", () => {
+  it("renders a remove button with the correct data-testid and aria-label", () => {
+    renderRow({ ticker: "AAPL" });
+
+    const button = screen.getByTestId("remove-AAPL");
+    expect(button).toHaveAttribute("aria-label", "Remove AAPL from watchlist");
+  });
+
+  it("calls onRemove with the ticker when the remove button is clicked", async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <WatchlistRow ticker="AAPL" onRemove={onRemove} />
+        </tbody>
+      </table>,
+    );
+
+    await user.click(screen.getByTestId("remove-AAPL"));
+
+    expect(onRemove).toHaveBeenCalledWith("AAPL");
+  });
+
+  it("does not fire the row's onSelect when the remove button is clicked", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onRemove = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <WatchlistRow ticker="AAPL" onSelect={onSelect} onRemove={onRemove} />
+        </tbody>
+      </table>,
+    );
+
+    await user.click(screen.getByTestId("remove-AAPL"));
+
+    expect(onRemove).toHaveBeenCalledWith("AAPL");
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("still fires onSelect when clicking elsewhere in the row", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <WatchlistRow ticker="AAPL" onSelect={onSelect} />
+        </tbody>
+      </table>,
+    );
+
+    await user.click(screen.getByText("AAPL"));
+
+    expect(onSelect).toHaveBeenCalledWith("AAPL");
+  });
+});
+
 describe("Watchlist", () => {
   afterEach(() => {
     vi.mocked(useWatchlist).mockReset();
@@ -297,6 +359,159 @@ describe("Watchlist", () => {
 
     expect(screen.getByText("PYPL")).toBeInTheDocument();
     expect(screen.getByTestId("price-PYPL")).toHaveTextContent("—");
+  });
+
+  it("renders five header cells, matching each body row's five cells", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([makeEntry("AAPL")]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const headerRow = screen.getAllByRole("row")[0];
+    expect(within(headerRow).getAllByRole("columnheader")).toHaveLength(5);
+  });
+
+  it("renders the empty state and keeps the add-ticker form visible when there are no entries", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const empty = screen.getByTestId("watchlist-empty");
+    expect(empty).toHaveTextContent("Watchlist is empty");
+    expect(empty).toHaveTextContent("Add a ticker above to start streaming its price.");
+    expect(screen.getByTestId("watchlist-add-form")).toBeInTheDocument();
+  });
+});
+
+describe("Watchlist remove wiring", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+    vi.mocked(removeWatchlistTicker).mockReset();
+  });
+
+  it("calls removeWatchlistTicker with the row's ticker and refetch on success, without firing onSelect", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    vi.mocked(removeWatchlistTicker).mockResolvedValue({ ok: true, data: null });
+    const onSelect = vi.fn();
+    const refetch = mockUseWatchlist([makeEntry("AAPL")]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist onSelect={onSelect} />
+      </PriceStreamProvider>,
+    );
+
+    await user.click(screen.getByTestId("remove-AAPL"));
+
+    await waitFor(() => expect(removeWatchlistTicker).toHaveBeenCalledWith("AAPL"));
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not call refetch when removeWatchlistTicker resolves not-ok", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    vi.mocked(removeWatchlistTicker).mockResolvedValue({
+      ok: false,
+      error: "Network error — unable to reach the server.",
+    });
+    const refetch = mockUseWatchlist([makeEntry("AAPL")]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    await user.click(screen.getByTestId("remove-AAPL"));
+
+    await waitFor(() => expect(removeWatchlistTicker).toHaveBeenCalledWith("AAPL"));
+    expect(refetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("Page selection guard on watchlist removal", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+  });
+
+  it("moves the chart selection to the first remaining ticker when the selected ticker leaves the watchlist", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    mockUseWatchlist([makeEntry("AAPL"), makeEntry("GOOGL")]);
+
+    const { rerender } = render(<Page />);
+
+    await user.click(screen.getByTestId("row-AAPL"));
+    expect(screen.getByTestId("row-AAPL")).toHaveAttribute("aria-selected", "true");
+
+    mockUseWatchlist([makeEntry("GOOGL")]);
+    rerender(<Page />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("row-GOOGL")).toHaveAttribute("aria-selected", "true"),
+    );
+  });
+
+  it("clears the selection when the watchlist becomes empty", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    mockUseWatchlist([makeEntry("AAPL")]);
+
+    const { rerender } = render(<Page />);
+
+    await user.click(screen.getByTestId("row-AAPL"));
+    expect(screen.getByTestId("row-AAPL")).toHaveAttribute("aria-selected", "true");
+
+    mockUseWatchlist([]);
+    rerender(<Page />);
+
+    await waitFor(() => expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument());
+  });
+
+  it("does not change the selection when the selected ticker is still in the watchlist", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    mockUseWatchlist([makeEntry("AAPL"), makeEntry("GOOGL")]);
+
+    const { rerender } = render(<Page />);
+
+    await user.click(screen.getByTestId("row-AAPL"));
+    expect(screen.getByTestId("row-AAPL")).toHaveAttribute("aria-selected", "true");
+
+    // Same entries, new array reference — selection must not move.
+    mockUseWatchlist([makeEntry("AAPL"), makeEntry("GOOGL")]);
+    rerender(<Page />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("row-AAPL")).toHaveAttribute("aria-selected", "true"),
+    );
   });
 });
 
