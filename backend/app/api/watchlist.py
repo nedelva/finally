@@ -1,8 +1,8 @@
 """Watchlist REST routes.
 
-This plan (02-02) wires `POST /api/watchlist` (add) on top of 02-01's
-`GET /api/watchlist`. `DELETE /api/watchlist/{ticker}` (remove) lands in
-02-03.
+`GET /api/watchlist` (02-01), `POST /api/watchlist` (02-02), and
+`DELETE /api/watchlist/{ticker}` (02-03) — the full CRUD surface for the
+user's persisted watchlist.
 """
 
 from __future__ import annotations
@@ -10,11 +10,11 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.db import add_watchlist_ticker, get_watchlist
+from app.db import add_watchlist_ticker, get_watchlist, remove_watchlist_ticker
 from app.market import PriceCache, is_valid_ticker_format, normalize_ticker
 
 logger = logging.getLogger(__name__)
@@ -108,5 +108,26 @@ def create_watchlist_router(price_cache: PriceCache) -> APIRouter:
             )
         await request.app.state.market_source.add_ticker(normalized)
         return JSONResponse(status_code=201, content=result)
+
+    @router.delete("/watchlist/{ticker}")
+    async def delete_watchlist_route(ticker: str, request: Request) -> Response:
+        """Remove a watchlist ticker and stop it streaming.
+
+        Order of operations is load-bearing, mirroring the POST handler:
+        normalize the path segment -> delete (no notify on a no-op absent
+        delete) -> notify the running market data source so the ticker
+        stops appearing in the next SSE frame. A 204 carries no body, so the
+        frontend's 204 special-case in `removeWatchlistTicker` never
+        attempts to parse one.
+        """
+        normalized = normalize_ticker(ticker)
+        removed = await asyncio.to_thread(remove_watchlist_ticker, normalized)
+        if not removed:
+            return JSONResponse(
+                status_code=404,
+                content={"error": f"{normalized} is not on your watchlist."},
+            )
+        await request.app.state.market_source.remove_ticker(normalized)
+        return Response(status_code=204)
 
     return router

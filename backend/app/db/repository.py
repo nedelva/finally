@@ -66,6 +66,21 @@ def add_watchlist_ticker(ticker: str) -> dict:
 def remove_watchlist_ticker(ticker: str) -> bool:
     """Delete a watchlist row for the current user.
 
-    RED-phase stub — implemented in the following GREEN commit.
+    Expects an already-normalized ticker. Deletes only from the `watchlist`
+    table — removal is a display-list change, not a cascading purge, so this
+    never touches `positions`, `trades`, `portfolio_snapshots`, or
+    `chat_messages`. Returns whether a row was actually deleted (read from
+    the cursor's `rowcount`), following this project's convention that
+    absence is a return value, not an exception, and giving the route what
+    it needs to distinguish a 204 from a 404.
     """
-    raise NotImplementedError
+    conn = get_connection()
+    try:
+        with conn:
+            cursor = conn.execute(
+                "DELETE FROM watchlist WHERE user_id = ? AND ticker = ?",
+                (DEFAULT_USER_ID, ticker),
+            )
+            return cursor.rowcount > 0
+    finally:
+        conn.close()
