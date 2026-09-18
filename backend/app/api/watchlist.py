@@ -1,7 +1,8 @@
 """Watchlist REST routes.
 
-This task wires only `GET /api/watchlist`. `POST /api/watchlist` (add) lands
-in plan 02-02 and `DELETE /api/watchlist/{ticker}` (remove) lands in 02-03.
+This plan (02-02) wires `POST /api/watchlist` (add) on top of 02-01's
+`GET /api/watchlist`. `DELETE /api/watchlist/{ticker}` (remove) lands in
+02-03.
 """
 
 from __future__ import annotations
@@ -9,12 +10,20 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from app.db import get_watchlist
-from app.market import PriceCache
+from app.db import add_watchlist_ticker, get_watchlist
+from app.market import PriceCache, is_valid_ticker_format, normalize_ticker
 
 logger = logging.getLogger(__name__)
+
+
+class WatchlistAddRequest(BaseModel):
+    """Request body for `POST /api/watchlist`."""
+
+    ticker: str
 
 
 def build_watchlist(price_cache: PriceCache) -> dict:
@@ -70,5 +79,34 @@ def create_watchlist_router(price_cache: PriceCache) -> APIRouter:
     async def get_watchlist_route() -> dict:
         """Return the current user's watchlist joined with live prices."""
         return await asyncio.to_thread(build_watchlist, price_cache)
+
+    @router.post("/watchlist")
+    async def post_watchlist_route(body: WatchlistAddRequest, request: Request) -> JSONResponse:
+        """Validate, persist, and start streaming a new watchlist ticker.
+
+        Order of operations is load-bearing: normalize -> format-validate
+        (no DB write, no notify on failure) -> persist (no notify on a
+        duplicate) -> notify the running market data source so the next SSE
+        frame carries the new ticker.
+        """
+        raw = body.ticker
+        normalized = normalize_ticker(raw)
+        if not is_valid_ticker_format(normalized):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": f"{raw} isn't a valid ticker — use 1-5 letters or numbers, "
+                    "like AAPL."
+                },
+            )
+        try:
+            result = await asyncio.to_thread(add_watchlist_ticker, normalized)
+        except ValueError:
+            return JSONResponse(
+                status_code=409,
+                content={"error": f"{normalized} is already on your watchlist."},
+            )
+        await request.app.state.market_source.add_ticker(normalized)
+        return JSONResponse(status_code=201, content=result)
 
     return router

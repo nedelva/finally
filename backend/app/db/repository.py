@@ -9,6 +9,10 @@ event loop. Every SQL statement uses `?` placeholders bound through the
 
 from __future__ import annotations
 
+import sqlite3
+import uuid
+from datetime import UTC, datetime
+
 from app.db.connection import get_connection
 from app.db.schema import DEFAULT_USER_ID
 
@@ -35,7 +39,25 @@ def get_watchlist() -> list[dict]:
 def add_watchlist_ticker(ticker: str) -> dict:
     """Insert a new watchlist row for the current user.
 
-    RED-phase stub (02-02 Task 1) — implementation lands in the paired GREEN
-    commit. Expects an already-normalized, already-validated ticker.
+    Expects an already-normalized, already-validated ticker — the format
+    gate lives at the API boundary (`app/api/watchlist.py`), not here. On a
+    `UNIQUE (user_id, ticker)` constraint violation, raises `ValueError`
+    naming the ticker, following this project's convention that a duplicate
+    is a caller-level condition the route translates into a status code.
     """
-    raise NotImplementedError
+    row_id = str(uuid.uuid4())
+    added_at = datetime.now(UTC).isoformat()
+    conn = get_connection()
+    try:
+        try:
+            with conn:
+                conn.execute(
+                    "INSERT INTO watchlist (id, user_id, ticker, added_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (row_id, DEFAULT_USER_ID, ticker, added_at),
+                )
+        except sqlite3.IntegrityError as exc:
+            raise ValueError(f"{ticker} is already on your watchlist.") from exc
+    finally:
+        conn.close()
+    return {"ticker": ticker, "added_at": added_at}
