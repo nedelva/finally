@@ -78,7 +78,7 @@ Plans:
   3. Reloading the browser shows the user's own watchlist, not the built-in default list
   4. A malformed or empty ticker entry is rejected with a visible message and leaves the watchlist unchanged
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 Plans:
 **Wave 1**
@@ -87,7 +87,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — Add a ticker: `POST /api/watchlist` with format validation, the shared ticker-normalization repair across both data sources, and the add-ticker form
+- [x] 02-02-PLAN.md — Add a ticker: `POST /api/watchlist` with format validation, the shared ticker-normalization repair across both data sources, and the add-ticker form
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -184,7 +184,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
-| 2. Persistent Watchlist | 1/3 | In Progress|  |
+| 2. Persistent Watchlist | 2/3 | In Progress|  |
 | 3. Trading & Portfolio | 0/TBD | Not started | - |
 | 4. AI Copilot | 0/TBD | Not started | - |
 | 5. One-Command Delivery | 0/TBD | Not started | - |

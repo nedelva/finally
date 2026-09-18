@@ -26,7 +26,7 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 
 ### Watchlist
 
-- [ ] **WTCH-01**: User can add a ticker to the watchlist manually
+- [x] **WTCH-01**: User can add a ticker to the watchlist manually
 - [ ] **WTCH-02**: User can remove a ticker from the watchlist manually
 
 ### AI Chat
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORT-04 | Phase 3 | Pending |
 | PORT-05 | Phase 3 | Pending |
 | PORT-06 | Phase 3 | Pending |
-| WTCH-01 | Phase 2 | Pending |
+| WTCH-01 | Phase 2 | Complete |
 | WTCH-02 | Phase 2 | Pending |
 | CHAT-01 | Phase 4 | Pending |
 | CHAT-02 | Phase 4 | Pending |
