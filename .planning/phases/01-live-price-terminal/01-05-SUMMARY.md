@@ -164,3 +164,7 @@ This plan completes Phase 1 (Live Price Terminal) — all five requirements (MKT
 ---
 *Phase: 01-live-price-terminal*
 *Completed: 2026-09-18*
+
+## Self-Check: PASSED
+
+All 6 created/produced files verified present on disk (`frontend/components/ConnectionDot.tsx`, `frontend/components/Header.tsx`, `frontend/components/MainChart.tsx`, `frontend/__tests__/ConnectionDot.test.tsx`, `frontend/__tests__/MainChart.test.tsx`, and this SUMMARY.md). All 5 commits (`21ab944`, `f541a2a`, `88c1595`, `a2ccba9`, `9377583`) verified present in git history.
