@@ -12,8 +12,8 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 - [x] **MKT-01**: User sees a watchlist of 10 default tickers with live-updating prices in a grid, streamed via SSE
 - [x] **MKT-02**: Prices flash green (uptick) or red (downtick) with a fading CSS animation on change
 - [x] **MKT-03**: User sees a sparkline mini-chart beside each watchlist ticker, accumulated from the SSE stream since page load
-- [ ] **MKT-04**: User can click a ticker in the watchlist to see a larger detailed price chart in the main chart area
-- [ ] **MKT-05**: Header shows a colored connection-status dot (green/yellow/red) reflecting SSE connection state, with automatic reconnection on disconnect
+- [x] **MKT-04**: User can click a ticker in the watchlist to see a larger detailed price chart in the main chart area
+- [x] **MKT-05**: Header shows a colored connection-status dot (green/yellow/red) reflecting SSE connection state, with automatic reconnection on disconnect
 
 ### Portfolio
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MKT-01 | Phase 1 | Complete |
 | MKT-02 | Phase 1 | Complete |
 | MKT-03 | Phase 1 | Complete |
-| MKT-04 | Phase 1 | Pending |
-| MKT-05 | Phase 1 | Pending |
+| MKT-04 | Phase 1 | Complete |
+| MKT-05 | Phase 1 | Complete |
 | PORT-01 | Phase 3 | Pending |
 | PORT-02 | Phase 3 | Pending |
 | PORT-03 | Phase 3 | Pending |
