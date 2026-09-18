@@ -5,7 +5,7 @@
 // each ticker's tick/history down, so this component never opens a stream
 // connection of its own and stays directly testable without a provider.
 
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import type { PriceTick } from "@/lib/types";
 import type { PricePoint } from "@/lib/usePriceStream";
 import { usePriceFlash } from "@/lib/usePriceFlash";
@@ -21,6 +21,8 @@ export interface WatchlistRowProps {
   onSelect?: (ticker: string) => void;
   /** Whether this row is the currently selected ticker in the main chart. */
   selected?: boolean;
+  /** Called with this row's ticker when the remove affordance is clicked. */
+  onRemove?: (ticker: string) => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function WatchlistRow({
   history = [],
   onSelect,
   selected = false,
+  onRemove,
 }: WatchlistRowProps) {
   const flashClass = usePriceFlash(tick?.price);
 
@@ -54,6 +57,14 @@ export function WatchlistRow({
       event.preventDefault();
       select();
     }
+  };
+
+  // Must stop propagation before invoking onRemove — the <tr> above already
+  // carries onClick={select}, so without this a click on the glyph would
+  // bubble and also fire the row's click-to-chart selection.
+  const handleRemoveClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onRemove?.(ticker);
   };
 
   return (
@@ -82,6 +93,17 @@ export function WatchlistRow({
       </td>
       <td data-testid={`sparkline-${ticker}`} className="py-1.5 pr-3">
         <Sparkline data={history} width={80} height={24} />
+      </td>
+      <td className="py-1.5 pr-3 text-right">
+        <button
+          type="button"
+          data-testid={`remove-${ticker}`}
+          aria-label={`Remove ${ticker} from watchlist`}
+          onClick={handleRemoveClick}
+          className="text-sm text-[var(--color-down)]"
+        >
+          ×
+        </button>
       </td>
     </tr>
   );

@@ -14,7 +14,7 @@
 // form row and the table are now siblings inside the same bordered panel.
 
 import { type FormEvent, useState } from "react";
-import { addWatchlistTicker } from "@/lib/api";
+import { addWatchlistTicker, removeWatchlistTicker } from "@/lib/api";
 import { usePriceStreamContext } from "@/lib/PriceStreamContext";
 import { useWatchlist } from "@/lib/hooks";
 import { WatchlistRow } from "./WatchlistRow";
@@ -56,6 +56,19 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
     setSubmitting(false);
   }
 
+  // The UI-SPEC leaves the failed-DELETE treatment undesigned (backstop
+  // item). Reusing the existing add-ticker error slot rather than inventing
+  // a second error-rendering mechanism keeps this minimal and consistent.
+  async function handleRemove(ticker: string) {
+    const result = await removeWatchlistTicker(ticker);
+    if (result.ok) {
+      setError("");
+      refetch();
+    } else {
+      setError(result.error);
+    }
+  }
+
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)]">
       <form
@@ -87,28 +100,37 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
       >
         {error}
       </p>
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wide text-gray-500">
-            <th className="py-2 pl-3 pr-4 font-medium">Symbol</th>
-            <th className="py-2 pr-4 font-medium">Price</th>
-            <th className="py-2 pr-4 font-medium">Chg %</th>
-            <th className="py-2 pr-4 font-medium">Chart</th>
-          </tr>
-        </thead>
-        <tbody>
-          {watchlist.map((entry) => (
-            <WatchlistRow
-              key={entry.ticker}
-              ticker={entry.ticker}
-              tick={ticks[entry.ticker]}
-              history={history[entry.ticker]}
-              selected={entry.ticker === selectedTicker}
-              onSelect={onSelect}
-            />
-          ))}
-        </tbody>
-      </table>
+      {watchlist.length === 0 ? (
+        <div data-testid="watchlist-empty" className="px-4 py-6 text-center text-sm text-gray-500">
+          <h2 className="mb-1 font-medium text-gray-300">Watchlist is empty</h2>
+          <p>Add a ticker above to start streaming its price.</p>
+        </div>
+      ) : (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="py-2 pl-3 pr-4 font-medium">Symbol</th>
+              <th className="py-2 pr-4 font-medium">Price</th>
+              <th className="py-2 pr-4 font-medium">Chg %</th>
+              <th className="py-2 pr-4 font-medium">Chart</th>
+              <th className="py-2 pr-3 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {watchlist.map((entry) => (
+              <WatchlistRow
+                key={entry.ticker}
+                ticker={entry.ticker}
+                tick={ticks[entry.ticker]}
+                history={history[entry.ticker]}
+                selected={entry.ticker === selectedTicker}
+                onSelect={onSelect}
+                onRemove={handleRemove}
+              />
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
