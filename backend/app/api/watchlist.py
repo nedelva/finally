@@ -106,7 +106,17 @@ def create_watchlist_router(price_cache: PriceCache) -> APIRouter:
                 status_code=409,
                 content={"error": f"{normalized} is already on your watchlist."},
             )
-        await request.app.state.market_source.add_ticker(normalized)
+        try:
+            await request.app.state.market_source.add_ticker(normalized)
+        except Exception:
+            # The DB write above already committed, so the ticker is
+            # persisted watchlist state regardless of what happens here.
+            # Log and still return success rather than surface a 500 for a
+            # mutation that already succeeded — the price stream will pick
+            # the ticker up on the next process restart (lifespan startup
+            # reads tickers straight from the DB) even if the running
+            # process's market source failed to add it live.
+            logger.exception("Failed to notify market source of new ticker %s", normalized)
         return JSONResponse(status_code=201, content=result)
 
     @router.delete("/watchlist/{ticker}")
@@ -127,7 +137,17 @@ def create_watchlist_router(price_cache: PriceCache) -> APIRouter:
                 status_code=404,
                 content={"error": f"{normalized} is not on your watchlist."},
             )
-        await request.app.state.market_source.remove_ticker(normalized)
+        try:
+            await request.app.state.market_source.remove_ticker(normalized)
+        except Exception:
+            # The DB delete above already committed, so the ticker is gone
+            # from persisted watchlist state regardless of what happens
+            # here. Log and still return success rather than surface a 500
+            # for a mutation that already succeeded — worst case the price
+            # stream keeps ticking this ticker until the next process
+            # restart, which is a display-only inconsistency, not a data
+            # integrity problem.
+            logger.exception("Failed to notify market source of removed ticker %s", normalized)
         return Response(status_code=204)
 
     return router
