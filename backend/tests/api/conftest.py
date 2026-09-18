@@ -17,11 +17,15 @@ class FakeMarketDataSource(MarketDataSource):
     recording fake makes more readable than mock call-arg inspection.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, fail_notify: bool = False) -> None:
         self.started: list[str] = []
         self.added: list[str] = []
         self.removed: list[str] = []
         self.stopped = False
+        # WR-01 regression coverage: when True, add_ticker/remove_ticker
+        # raise instead of recording, simulating a market-source notify
+        # failure after the DB write/delete has already committed.
+        self._fail_notify = fail_notify
 
     async def start(self, tickers: list[str]) -> None:
         self.started = list(tickers)
@@ -30,9 +34,13 @@ class FakeMarketDataSource(MarketDataSource):
         self.stopped = True
 
     async def add_ticker(self, ticker: str) -> None:
+        if self._fail_notify:
+            raise RuntimeError("simulated market-source notify failure")
         self.added.append(ticker)
 
     async def remove_ticker(self, ticker: str) -> None:
+        if self._fail_notify:
+            raise RuntimeError("simulated market-source notify failure")
         self.removed.append(ticker)
 
     def get_tickers(self) -> list[str]:
@@ -56,5 +64,23 @@ def client(tmp_path, fake_market_source) -> Iterator[TestClient]:
     fixture, which is always past that point.
     """
     app = create_app(static_dir=tmp_path, market_source=fake_market_source)
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def failing_market_source() -> FakeMarketDataSource:
+    """A FakeMarketDataSource whose add_ticker/remove_ticker always raise.
+
+    WR-01 regression coverage: simulates a market-source notify failure
+    happening after the watchlist DB write/delete has already committed.
+    """
+    return FakeMarketDataSource(fail_notify=True)
+
+
+@pytest.fixture
+def client_with_failing_notify(tmp_path, failing_market_source) -> Iterator[TestClient]:
+    """A TestClient whose market source raises on add_ticker/remove_ticker."""
+    app = create_app(static_dir=tmp_path, market_source=failing_market_source)
     with TestClient(app) as test_client:
         yield test_client

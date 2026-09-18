@@ -235,3 +235,46 @@ class TestRemoveWatchlist:
                 assert count == 0, f"expected 0 rows in {table}, found {count}"
         finally:
             conn.close()
+
+
+class TestMarketSourceNotifyFailure:
+    """WR-01: a market-source notify failure must not surface as an
+    unhandled 500 for a DB mutation that already committed."""
+
+    def test_add_still_returns_201_when_market_source_notify_raises(
+        self, client_with_failing_notify
+    ):
+        response = client_with_failing_notify.post("/api/watchlist", json={"ticker": "PYPL"})
+
+        assert response.status_code == 201
+        assert response.json()["ticker"] == "PYPL"
+
+    def test_add_still_persists_the_row_when_market_source_notify_raises(
+        self, client_with_failing_notify
+    ):
+        client_with_failing_notify.post("/api/watchlist", json={"ticker": "PYPL"})
+
+        tickers = {
+            entry["ticker"]
+            for entry in client_with_failing_notify.get("/api/watchlist").json()["watchlist"]
+        }
+        assert "PYPL" in tickers
+
+    def test_remove_still_returns_204_when_market_source_notify_raises(
+        self, client_with_failing_notify
+    ):
+        # AAPL is one of the ten seeded default tickers.
+        response = client_with_failing_notify.delete("/api/watchlist/AAPL")
+
+        assert response.status_code == 204
+
+    def test_remove_still_deletes_the_row_when_market_source_notify_raises(
+        self, client_with_failing_notify
+    ):
+        client_with_failing_notify.delete("/api/watchlist/AAPL")
+
+        tickers = {
+            entry["ticker"]
+            for entry in client_with_failing_notify.get("/api/watchlist").json()["watchlist"]
+        }
+        assert "AAPL" not in tickers
