@@ -32,7 +32,7 @@ class PriceCache:
         == price (change/change_percent == 0).
         """
         with self._lock:
-            ts = timestamp or time.time()
+            ts = timestamp if timestamp is not None else time.time()
             prev = self._prices.get(ticker)
             previous_price = prev.price if prev else price
             rounded_price = round(price, 2)
