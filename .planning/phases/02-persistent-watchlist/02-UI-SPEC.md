@@ -52,13 +52,16 @@ New elements this phase (add-ticker form row, remove button) must use only `sm`(
 
 ## Typography
 
+**Scope note (binds the dimension):** this contract's declared font-weight set covers only the typography **this phase introduces on new elements**. Phase 1's shipped, unchanged treatments — table headers and ticker symbols at 12px/500 (medium), page heading at 20px/600 (semibold) — are out of scope for Phase 2 and are not part of this contract's weight count; they are mentioned here only for context, not as a second declaration. If the executor adds a `<th>` header label above the new remove-affordance column, it must reuse this existing 12px/500 header treatment unchanged — it is not a new element and does not add a weight.
+
+### This phase's typography contract (new elements only)
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Label | 12px (`text-xs`) | 500 (medium) | 1.33 |
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 |
-| Heading | 20px (`text-xl`) | 600 (semibold) | 1.2 |
+| Emphasis | 14px (`text-sm`) | 600 (semibold) | 1.5 |
 
-Reused from Phase 1's shipped scale — no new size introduced. Weights in active use across the app are 400/500/600; this phase's **new** elements (add-ticker input, submit button, error message, remove affordance) use only **400** (input text, error message body) and **600** (submit button label, matching `Header.tsx`'s `font-semibold` treatment for emphasis) — they do not introduce a 4th weight. Existing 500 (`font-medium`) usage on table headers/ticker symbols is unchanged.
+Applies to: add-ticker input text and placeholder (400), inline error message (400), submit button label (600, matching `Header.tsx`'s existing `font-semibold` treatment for emphasis), remove-affordance glyph (400). Both 400 and 600 already exist in Phase 1's shipped scale (body text and page heading, respectively) — **this phase introduces zero new font weights.** No new size is introduced either; both reuse Phase 1's existing 14px (`text-sm`) step.
 
 Display tier: not used this phase — no display-size text is introduced by the watchlist controls.
 
@@ -73,7 +76,7 @@ Display tier: not used this phase — no display-size text is introduced by the 
 | Accent (10%) | `#753991` (`--color-secondary-purple`) | Add-ticker submit button only |
 | Destructive/Error | `#dc2626` (`--color-down`) | Remove-ticker button/glyph, validation error text and input error border |
 
-Accent reserved for: the **Add** submit button background/border only (per PLAN.md §2: "Purple Secondary (submit buttons)"). Do not use purple for the remove affordance, error text, or any other element this phase.
+Accent reserved for: the **Add Ticker** submit button background/border only (per PLAN.md §2: "Purple Secondary (submit buttons)"). Do not use purple for the remove affordance, error text, or any other element this phase.
 
 Additional established tokens reused (unchanged from Phase 1, not re-specified as new accents):
 - `#ecad0a` (`--color-accent-yellow`) — brand wordmark, connecting/reconnecting status dot only. Not used by this phase's new controls.
@@ -88,7 +91,7 @@ Additional established tokens reused (unchanged from Phase 1, not re-specified a
 
 | Element | Copy |
 |---------|------|
-| Primary CTA | Button label: **"Add"**. Input placeholder: **"Add ticker (e.g. PYPL)"** |
+| Primary CTA | Button label: **"Add Ticker"**. Input placeholder: **"Add ticker (e.g. PYPL)"** |
 | Empty state heading | "Watchlist is empty" — shown only if the user removes every ticker |
 | Empty state body | "Add a ticker above to start streaming its price." |
 | Error state — empty submission | "Enter a ticker symbol to add it." (client-side, no network round trip) |
@@ -126,8 +129,9 @@ Not applicable — `Tool: none`, no shadcn or third-party registry used this pha
 
 ## Interaction & Layout Notes (supplementary — not a template section, kept for executor clarity)
 
+- **Focal point:** the add-ticker form row (input + purple "Add Ticker" button) is what draws the eye first — it sits at the top of the watchlist panel, above the table, and is the only purple-accented control on the screen.
 - **Placement:** the add-ticker form is a single `<form>` row (`<input>` + `<button type="submit">`) inside the *same* bordered panel as the watchlist table (`Watchlist.tsx`'s existing `<table>` wrapper `div`/border), positioned directly above the `<thead>`. This modifies the existing panel; it does not introduce a new card/section.
-- **Remove affordance:** add a 5th `<td>` to each `WatchlistRow`, right-aligned, containing a small button rendering `×` (Unicode U+00D7), `text-sm` (14px), colored `text-[var(--color-down)]`, with `aria-label="Remove {ticker} from watchlist"` and `data-testid="remove-{ticker}"`. Must call `event.stopPropagation()` before invoking the remove handler (see UI Considerations backstop row above).
+- **Remove affordance:** add a 5th `<td>` to each `WatchlistRow`, right-aligned, containing a small button rendering `×` (Unicode U+00D7), `text-sm` (14px), colored `text-[var(--color-down)]`, with `aria-label="Remove {ticker} from watchlist"` and `data-testid="remove-{ticker}"`. Must call `event.stopPropagation()` before invoking the remove handler (see UI Considerations backstop row above). The corresponding 5th `<th>` in the existing `<thead>` row is left empty (no visible label text) — it does not introduce a new header-typography element and reuses the existing header row's 12px/500 treatment unchanged if any text is ever added.
 - **Normalization display:** the input does not force client-side uppercasing as the user types — normalization (uppercase + strip) is a backend responsibility per the Phase 2 scope notes. The input's placeholder and error copy use uppercase examples (`PYPL`, `AAPL`) to set expectation without enforcing it client-side.
 - **New SSE tickers:** per the phase's scope note, a successful add must cause the new ticker to start appearing in `usePriceStreamContext()`'s `ticks`/`history`/`tickers` within seconds — the add-ticker success path should trigger a `GET /api/watchlist` refetch (or equivalent local state update) so the grid re-renders with the new row without a full page reload; a successful remove must do the same in reverse.
 - **Data-testid conventions** (extends Phase 1's `row-{ticker}` / `price-{ticker}` / `change-{ticker}` / `sparkline-{ticker}` pattern): `watchlist-add-form`, `watchlist-add-input`, `watchlist-add-submit`, `watchlist-add-error`, `remove-{ticker}`, `watchlist-empty`.
