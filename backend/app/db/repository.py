@@ -30,3 +30,12 @@ def get_watchlist() -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         conn.close()
+
+
+def add_watchlist_ticker(ticker: str) -> dict:
+    """Insert a new watchlist row for the current user.
+
+    RED-phase stub (02-02 Task 1) — implementation lands in the paired GREEN
+    commit. Expects an already-normalized, already-validated ticker.
+    """
+    raise NotImplementedError
