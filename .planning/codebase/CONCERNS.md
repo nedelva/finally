@@ -319,6 +319,20 @@ LLM_MOCK=false
 
 ---
 
+## Forward-Looking Notes from Phase Research
+
+### Watchlist Removal Must Guard Held Positions Once Trading Ships (Phase 3)
+
+**Issue:** Once `positions` starts being written (Phase 3, `PORT-02`/`PORT-03` buy/sell), removing a ticker from the watchlist must NOT unconditionally call `market_data_source.remove_ticker()` if the user still holds shares in it — doing so drops the ticker from `PriceCache`, which freezes that position's P&L at its last-known price and makes `POST /api/portfolio/trade` reject a sell with "no live price available." The user would hold shares they can no longer sell.
+
+**Origin:** Identified during Phase 2 (Persistent Watchlist) research, `.planning/phases/02-persistent-watchlist/02-RESEARCH.md`, Pitfall 5. Phase 2 itself does not need this guard — `positions` is empty until Phase 3 writes to it, so the check would be permanently dead code if added now.
+
+**Fix approach for whichever phase adds it (expected: Phase 3):** before calling `market_data_source.remove_ticker(ticker)` in the watchlist-removal path, check whether any position row still exists for that ticker (`user_id`, `ticker`); if so, still delete the `watchlist` row (the user's watchlist view is correct either way) but skip the market-source removal call so the ticker keeps streaming and remains sellable.
+
+**Files likely affected:** `backend/app/api/watchlist.py`'s `remove_from_watchlist()` (created in Phase 2), `backend/app/db/repository.py`'s `get_positions()` (created in Phase 3).
+
+---
+
 ## Recommendations for Next Phase
 
 1. **Build the FastAPI app** — instantiate PriceCache, market data source, mount SSE router, implement all §8 endpoints
