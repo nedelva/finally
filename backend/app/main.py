@@ -10,6 +10,7 @@ Phase 5's container CMD binds to.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -18,7 +19,16 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.market import DEFAULT_TICKERS, PriceCache, create_market_data_source, create_stream_router
+from app.api import create_watchlist_router
+from app.db import get_watchlist, init_db
+from app.market import (
+    DEFAULT_TICKERS,
+    MarketDataSource,
+    PriceCache,
+    create_market_data_source,
+    create_stream_router,
+    normalize_ticker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +71,9 @@ def resolve_static_dir() -> Path | None:
     return None
 
 
-def create_app(*, static_dir: Path | None = None) -> FastAPI:
+def create_app(
+    *, static_dir: Path | None = None, market_source: MarketDataSource | None = None
+) -> FastAPI:
     """Build the FastAPI application.
 
     Args:
@@ -69,17 +81,26 @@ def create_app(*, static_dir: Path | None = None) -> FastAPI:
             `None`, meaning "auto-resolve via `resolve_static_dir()`". Tests
             pass an explicit path to isolate the static-mount behaviour from
             whatever happens to exist on disk.
+        market_source: Market data source to drive the app's price cache.
+            Defaults to `None`, meaning "auto-resolve via
+            `create_market_data_source()`". Tests pass an explicit double to
+            isolate route/lifespan behaviour from real simulator timing or
+            from a `MASSIVE_API_KEY` triggering the Massive REST path.
     """
     price_cache = PriceCache()
-    source = create_market_data_source(price_cache)
+    source = market_source if market_source is not None else create_market_data_source(price_cache)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        """Start the market data source on boot, stop it on shutdown."""
-        await source.start(DEFAULT_TICKERS)
+        """Initialize the database, start the market data source on boot,
+        stop it on shutdown."""
+        await asyncio.to_thread(init_db)
+        rows = await asyncio.to_thread(get_watchlist)
+        tickers = [normalize_ticker(row["ticker"]) for row in rows] or DEFAULT_TICKERS
+        await source.start(tickers)
         app.state.price_cache = price_cache
         app.state.market_source = source
-        logger.info("Market data source started with %d default tickers", len(DEFAULT_TICKERS))
+        logger.info("Market data source started with %d tickers", len(tickers))
         yield
         await source.stop()
         logger.info("Market data source stopped")
@@ -90,6 +111,7 @@ def create_app(*, static_dir: Path | None = None) -> FastAPI:
     # order, and a mount at "/" matches everything by prefix. API routers
     # must be registered before the static mount, or it would swallow them.
     app.include_router(create_stream_router(price_cache))
+    app.include_router(create_watchlist_router(price_cache))
 
     @app.get("/api/health")
     async def health() -> dict[str, str]:
