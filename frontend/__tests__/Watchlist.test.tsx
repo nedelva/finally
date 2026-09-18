@@ -1,7 +1,9 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Watchlist } from "@/components/Watchlist";
 import { WatchlistRow } from "@/components/WatchlistRow";
+import { addWatchlistTicker } from "@/lib/api";
 import { PriceStreamProvider } from "@/lib/PriceStreamContext";
 import { useWatchlist } from "@/lib/hooks";
 import type { PriceTick, WatchlistEntry } from "@/lib/types";
@@ -12,6 +14,13 @@ import type { PriceTick, WatchlistEntry } from "@/lib/types";
 // stream's ever-growing ticker set.
 vi.mock("@/lib/hooks", () => ({
   useWatchlist: vi.fn(),
+}));
+
+// Second, independent mock (of lib/api rather than lib/hooks) — the
+// add-ticker form calls addWatchlistTicker() directly, not through a hook,
+// so each test controls its resolved/rejected ApiResult independently.
+vi.mock("@/lib/api", () => ({
+  addWatchlistTicker: vi.fn(),
 }));
 
 function makeEntry(ticker: string): WatchlistEntry {
@@ -26,13 +35,20 @@ function makeEntry(ticker: string): WatchlistEntry {
   };
 }
 
-function mockUseWatchlist(entries: WatchlistEntry[]) {
+function mockUseWatchlist(
+  entries: WatchlistEntry[],
+  refetch: ReturnType<typeof vi.fn> = vi.fn(),
+) {
   vi.mocked(useWatchlist).mockReturnValue({
     watchlist: entries,
     loading: false,
     error: null,
-    refetch: vi.fn(),
+    refetch,
   });
+  // Hoisted so callers can assert call count — a fresh vi.fn() built inside
+  // this helper on every invocation (the prior shape) can never be asserted
+  // against by the caller.
+  return refetch;
 }
 
 /**
@@ -281,5 +297,132 @@ describe("Watchlist", () => {
 
     expect(screen.getByText("PYPL")).toBeInTheDocument();
     expect(screen.getByTestId("price-PYPL")).toHaveTextContent("—");
+  });
+});
+
+describe("Watchlist add-ticker form", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+    vi.mocked(addWatchlistTicker).mockReset();
+  });
+
+  function setup(entries: WatchlistEntry[] = []) {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    const refetch = mockUseWatchlist(entries);
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+    return { refetch };
+  }
+
+  it("renders the add-ticker form with the exact placeholder and button label", () => {
+    setup();
+
+    expect(screen.getByTestId("watchlist-add-form")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Add ticker (e.g. PYPL)")).toBeInTheDocument();
+    expect(screen.getByTestId("watchlist-add-submit")).toHaveTextContent("Add Ticker");
+  });
+
+  it("calls addWatchlistTicker with the typed value, then refetch, on a valid submit", async () => {
+    const user = userEvent.setup();
+    vi.mocked(addWatchlistTicker).mockResolvedValue({
+      ok: true,
+      data: { ticker: "PYPL", added_at: "2026-09-18T00:00:00.000Z" },
+    });
+    const { refetch } = setup();
+
+    await user.type(screen.getByTestId("watchlist-add-input"), "PYPL");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    await waitFor(() => expect(addWatchlistTicker).toHaveBeenCalledWith("PYPL"));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the empty-submission error and does not call addWatchlistTicker for an empty submit", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    expect(screen.getByTestId("watchlist-add-error")).toHaveTextContent(
+      "Enter a ticker symbol to add it.",
+    );
+    expect(addWatchlistTicker).not.toHaveBeenCalled();
+  });
+
+  it("renders the empty-submission error and does not call addWatchlistTicker for whitespace-only input", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.type(screen.getByTestId("watchlist-add-input"), "   ");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    expect(screen.getByTestId("watchlist-add-error")).toHaveTextContent(
+      "Enter a ticker symbol to add it.",
+    );
+    expect(addWatchlistTicker).not.toHaveBeenCalled();
+  });
+
+  it("renders the server error verbatim and does not call refetch when addWatchlistTicker resolves not-ok", async () => {
+    const user = userEvent.setup();
+    vi.mocked(addWatchlistTicker).mockResolvedValue({
+      ok: false,
+      error: "TOOLONG isn't a valid ticker — use 1-5 letters or numbers, like AAPL.",
+    });
+    const { refetch } = setup();
+
+    await user.type(screen.getByTestId("watchlist-add-input"), "TOOLONG");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("watchlist-add-error")).toHaveTextContent(
+        "TOOLONG isn't a valid ticker — use 1-5 letters or numbers, like AAPL.",
+      ),
+    );
+    expect(refetch).not.toHaveBeenCalled();
+  });
+
+  it("disables the submit button and input, and labels the button Adding…, while the request is in flight", async () => {
+    const user = userEvent.setup();
+    let resolvePromise!: (value: {
+      ok: true;
+      data: { ticker: string; added_at: string };
+    }) => void;
+    vi.mocked(addWatchlistTicker).mockReturnValue(
+      new Promise((resolve) => {
+        resolvePromise = resolve;
+      }),
+    );
+    setup();
+
+    await user.type(screen.getByTestId("watchlist-add-input"), "PYPL");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    expect(screen.getByTestId("watchlist-add-submit")).toBeDisabled();
+    expect(screen.getByTestId("watchlist-add-submit")).toHaveTextContent("Adding…");
+    expect(screen.getByTestId("watchlist-add-input")).toBeDisabled();
+
+    resolvePromise({ ok: true, data: { ticker: "PYPL", added_at: "2026-09-18T00:00:00.000Z" } });
+    await waitFor(() => expect(screen.getByTestId("watchlist-add-submit")).not.toBeDisabled());
+  });
+
+  it("clears the input and the error slot after a successful add", async () => {
+    const user = userEvent.setup();
+    vi.mocked(addWatchlistTicker).mockResolvedValue({
+      ok: true,
+      data: { ticker: "PYPL", added_at: "2026-09-18T00:00:00.000Z" },
+    });
+    setup();
+
+    const input = screen.getByTestId("watchlist-add-input") as HTMLInputElement;
+    await user.type(input, "PYPL");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    await waitFor(() => expect(input.value).toBe(""));
+    expect(screen.getByTestId("watchlist-add-error")).toHaveTextContent("");
   });
 });
