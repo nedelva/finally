@@ -211,3 +211,10 @@ node_modules/
 /frontend/out/
 .next/
 *.tsbuildinfo
+
+# FinAlly SQLite runtime data (db/.gitkeep is tracked; the DB file and its
+# WAL/SHM/journal sidecars are not)
+db/*.db
+db/*.db-wal
+db/*.db-shm
+db/*.db-journal
