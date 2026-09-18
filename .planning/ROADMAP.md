@@ -78,12 +78,12 @@ Plans:
   3. Reloading the browser shows the user's own watchlist, not the built-in default list
   4. A malformed or empty ticker entry is rejected with a visible message and leaves the watchlist unchanged
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — TRACER: SQLite lazy init with the full PLAN.md §7 schema, `GET /api/watchlist`, a database-driven app lifespan, and a REST-driven watchlist grid
+- [x] 02-01-PLAN.md — TRACER: SQLite lazy init with the full PLAN.md §7 schema, `GET /api/watchlist`, a database-driven app lifespan, and a REST-driven watchlist grid
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -184,7 +184,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
-| 2. Persistent Watchlist | 0/3 | Not started | - |
+| 2. Persistent Watchlist | 1/3 | In Progress|  |
 | 3. Trading & Portfolio | 0/TBD | Not started | - |
 | 4. AI Copilot | 0/TBD | Not started | - |
 | 5. One-Command Delivery | 0/TBD | Not started | - |

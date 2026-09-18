@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Persistent Watchlist
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-09-18T07:06:28.395Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-09-18T07:27:05.437Z"
 last_activity: 2026-09-18
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: d17f9b1941fa680d662cd9175c037ec0b899ea3a
+last_activity_desc: Phase 02 execution started
+state_head: a53fb836f4c9386f68394eff0ef82d3e91bb2290
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
   percent: 20
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-17)
 
 **Core value:** The user can watch live prices stream, place simulated trades, and have an AI assistant that can see the portfolio and act on it in natural language — all in one dependency-free `docker run`.
-**Current focus:** Phase 01 — Live Price Terminal
+**Current focus:** Phase 02 — Persistent Watchlist
 
 ## Current Position
 
-Phase: 02 (Persistent Watchlist) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Persistent Watchlist) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-09-18 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-09-18 — Phase 02 execution started
 
 Progress: [██░░░░░░░░] 20%
 
@@ -63,6 +63,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 01 P03 | 13min | 2 tasks | 6 files |
 | Phase 01 P04 | 35min | 2 tasks | 6 files |
 | Phase 01 P05 | 30min | 2 tasks | 9 files |
+| Phase 02 P01 | 15min | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,9 @@ Recent decisions affecting current work:
 - [Phase 01]: [Phase 01]: WatchlistRow passes explicit width/height to Sparkline in production, not just in tests - deterministic table-cell sizing and exercises the same explicit-dimension path the tests verify
 - [Phase 01]: Amber connecting/reconnecting states share one CSS animate-pulse class rather than differentiating them — From the user's point of view both mean 'not yet live, not yet given up on'; the plan's three-distinct-class grouping assertion depends on this
 - [Phase 01]: Watchlist.test.tsx's row-role assertion split into row(1)+button(10) after WatchlistRow gained a required button role — role=button on the tr overrides its implicit row role for the ten body rows; the header row keeps role=row — Rule 3 fix, not a scope change
+- [Phase 02]: [Phase 02]: users_profile.id IS the user key for that table (no redundant user_id column) — matches PLAN.md §7's own column list
+- [Phase 02]: [Phase 02]: simulator.py/massive_client.py normalize_ticker() call sites deferred to plan 02-02, not this plan — 02-01's own files_modified list and Task 2 action text are authoritative over RESEARCH.md/PATTERNS.md
+- [Phase 02]: [Phase 02]: page.tsx's selectedTicker-reset-on-removal guard deferred to plan 02-03 — not in 02-01's files_modified list, and inert until the remove button ships
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-18T01:32:14.880Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: /Users/valeriu/AICourses/finally/.planning/phases/02-persistent-watchlist/02-UI-SPEC.md
+Last session: 2026-09-18T07:27:05.414Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
