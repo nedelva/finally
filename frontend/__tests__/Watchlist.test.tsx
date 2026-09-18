@@ -3,7 +3,37 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Watchlist } from "@/components/Watchlist";
 import { WatchlistRow } from "@/components/WatchlistRow";
 import { PriceStreamProvider } from "@/lib/PriceStreamContext";
-import type { PriceTick } from "@/lib/types";
+import { useWatchlist } from "@/lib/hooks";
+import type { PriceTick, WatchlistEntry } from "@/lib/types";
+
+// First vi.mock of a hook module in this project (no existing precedent to
+// match) — the idiomatic Vitest way to substitute useWatchlist()'s REST
+// response so row membership can be asserted independently of the SSE
+// stream's ever-growing ticker set.
+vi.mock("@/lib/hooks", () => ({
+  useWatchlist: vi.fn(),
+}));
+
+function makeEntry(ticker: string): WatchlistEntry {
+  return {
+    ticker,
+    added_at: "2026-09-18T00:00:00.000Z",
+    price: null,
+    previous_price: null,
+    change: null,
+    change_percent: null,
+    direction: "flat",
+  };
+}
+
+function mockUseWatchlist(entries: WatchlistEntry[]) {
+  vi.mocked(useWatchlist).mockReturnValue({
+    watchlist: entries,
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  });
+}
 
 /**
  * Minimal fake EventSource for the one Watchlist-container test that needs a
@@ -162,10 +192,51 @@ describe("WatchlistRow", () => {
 });
 
 describe("Watchlist", () => {
-  it("renders exactly ten rows when the shared stream reports ten tickers", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+  });
+
+  it("renders exactly ten rows when useWatchlist() returns ten entries", () => {
     // @ts-expect-error -- test double, not a full EventSource implementation
     global.EventSource = FakeEventSource;
     FakeEventSource.instances = [];
+
+    const tickers = [
+      "AAPL",
+      "GOOGL",
+      "MSFT",
+      "AMZN",
+      "TSLA",
+      "NVDA",
+      "META",
+      "JPM",
+      "V",
+      "NFLX",
+    ];
+    mockUseWatchlist(tickers.map(makeEntry));
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    // Body rows keep their native/implicit "row" role (WatchlistRow, plan
+    // 01-05, MKT-04 keyboard-activatable selection uses tabIndex + key
+    // handlers rather than role="button", preserving table semantics for
+    // assistive tech) — header row + ten body rows all report as "row".
+    expect(screen.getAllByRole("row")).toHaveLength(1 + tickers.length);
+  });
+
+  it("renders exactly three rows when useWatchlist() returns three entries, even after the stream has reported ten tickers", () => {
+    // This is the membership-source regression guard: row count must follow
+    // the REST response, never the SSE-derived ticker set (which only ever
+    // grows and cannot shrink on removal).
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist(["AAPL", "GOOGL", "MSFT"].map(makeEntry));
 
     render(
       <PriceStreamProvider>
@@ -174,7 +245,7 @@ describe("Watchlist", () => {
     );
 
     const source = FakeEventSource.instances[0];
-    const tickers = [
+    const tenTickers = [
       "AAPL",
       "GOOGL",
       "MSFT",
@@ -188,14 +259,27 @@ describe("Watchlist", () => {
     ];
     act(() => {
       source.fireMessage(
-        Object.fromEntries(tickers.map((t) => [t, makeTick(t, 100)])),
+        Object.fromEntries(tenTickers.map((t) => [t, makeTick(t, 100)])),
       );
     });
 
-    // Body rows keep their native/implicit "row" role (WatchlistRow, plan
-    // 01-05, MKT-04 keyboard-activatable selection uses tabIndex + key
-    // handlers rather than role="button", preserving table semantics for
-    // assistive tech) — header row + ten body rows all report as "row".
-    expect(screen.getAllByRole("row")).toHaveLength(1 + tickers.length);
+    expect(screen.getAllByRole("row")).toHaveLength(1 + 3);
+  });
+
+  it("still renders a row for an entry with no corresponding tick in the stream", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([makeEntry("PYPL")]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    expect(screen.getByText("PYPL")).toBeInTheDocument();
+    expect(screen.getByTestId("price-PYPL")).toHaveTextContent("—");
   });
 });

@@ -3,9 +3,13 @@
 // The watchlist grid container. Reads the single shared stream context
 // exactly once (per PLAN.md's "one EventSource for the whole app"
 // constraint) and distributes each ticker's tick/history down to a pure
-// WatchlistRow — no row ever opens its own connection.
+// WatchlistRow — no row ever opens its own connection. Row *membership*
+// comes from the REST-backed useWatchlist() hook, not from the stream's
+// ever-growing ticker set (which has no removal branch and is structurally
+// incapable of shrinking).
 
 import { usePriceStreamContext } from "@/lib/PriceStreamContext";
+import { useWatchlist } from "@/lib/hooks";
 import { WatchlistRow } from "./WatchlistRow";
 
 export interface WatchlistProps {
@@ -16,7 +20,8 @@ export interface WatchlistProps {
 }
 
 export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
-  const { ticks, history, tickers } = usePriceStreamContext();
+  const { ticks, history } = usePriceStreamContext();
+  const { watchlist } = useWatchlist();
 
   return (
     <table className="w-full border-collapse rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] text-sm">
@@ -29,13 +34,13 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
         </tr>
       </thead>
       <tbody>
-        {tickers.map((ticker) => (
+        {watchlist.map((entry) => (
           <WatchlistRow
-            key={ticker}
-            ticker={ticker}
-            tick={ticks[ticker]}
-            history={history[ticker]}
-            selected={ticker === selectedTicker}
+            key={entry.ticker}
+            ticker={entry.ticker}
+            tick={ticks[entry.ticker]}
+            history={history[entry.ticker]}
+            selected={entry.ticker === selectedTicker}
             onSelect={onSelect}
           />
         ))}
