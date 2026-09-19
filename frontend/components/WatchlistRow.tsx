@@ -112,7 +112,7 @@ export function WatchlistRow({
           aria-label={`Remove ${ticker} from watchlist`}
           onClick={handleRemoveClick}
           onKeyDown={handleRemoveKeyDown}
-          className="text-sm text-[var(--color-down)]"
+          className="inline-flex h-6 w-6 items-center justify-center align-middle rounded border border-[var(--color-down)]/40 bg-[var(--color-down)]/10 text-sm text-[var(--color-down)] hover:bg-[var(--color-down)]/20 focus:outline-none focus:ring-1 focus:ring-[var(--color-primary-blue)]"
         >
           ×
         </button>
