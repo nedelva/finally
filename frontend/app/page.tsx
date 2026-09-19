@@ -40,7 +40,10 @@ function Terminal() {
     <main className="flex min-h-screen flex-col gap-4 p-8">
       <Header status={status} />
 
-      <div className="flex flex-col gap-4 lg:flex-row">
+      <div
+        data-testid="terminal-layout-row"
+        className="flex flex-col gap-4 lg:flex-row lg:items-start"
+      >
         <div className="lg:w-1/2">
           <Watchlist selectedTicker={selectedTicker} onSelect={setSelectedTicker} />
         </div>

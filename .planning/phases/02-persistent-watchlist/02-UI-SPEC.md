@@ -112,7 +112,7 @@ Backend-owned error strings (empty/malformed/duplicate) should follow the exact 
 > the heuristic's first pass (which over-broadened the remove affordance to nearly every category
 > via "watchlist" keyword cues) before resolving, per the propose-then-confirm step.
 
-Applicable state considerations resolved: 9 covered, 5 backstop, 0 unresolved.
+Applicable state considerations resolved: 10 covered, 4 backstop, 0 unresolved.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
@@ -126,7 +126,7 @@ Applicable state considerations resolved: 9 covered, 5 backstop, 0 unresolved.
 | error | watchlist grid (`GET /api/watchlist` failure) | 🧪 backstop | No grid-level error state is specified (distinct from the add-ticker form's own error copy above). Held-out: reuse the existing `ApiResult` failure pattern from `lib/api.ts` if this path is ever exercised; no dedicated visual has been designed and none exists to verify against yet. |
 | populated | watchlist grid (1-N tickers) | ✅ covered | Existing Phase 1 table rendering, unchanged; new remove-affordance column added per row. |
 | partial | watchlist grid (newly-added row, pre-first-tick) | ✅ covered | A newly added ticker's row appears via the post-add `GET /api/watchlist` refetch before its first SSE price tick arrives. This reuses Phase 1's existing per-cell empty/loading treatment for price and sparkline cells (already designed for progressive fill-in from page load) — no new state is introduced. |
-| overflow | watchlist grid (many tickers vs. panel height) | 🧪 backstop | This phase adds no server-side max-watchlist-size cap, so the list can grow past what a Phase-1-sized panel comfortably fits. No scroll/clip/wrap decision is specified here. Held-out: if the panel does not already scroll internally, this needs a follow-up design decision before the list can grow unbounded in practice. |
+| overflow | watchlist grid (many tickers vs. panel height) | ✅ covered | Corrected 2026-09-19 (gap G-02-5): the loading/load-error/empty/table region is wrapped in a `data-testid="watchlist-scroll-container"` div with `lg:max-h-[440px] overflow-y-auto`, scoped to the `lg:` breakpoint (where the watchlist/chart panels sit side by side) so it never nests a second scroll region inside the page's own scroll on mobile/tablet. The add-ticker form and its error slot stay outside this wrapper, always visible. See `.planning/debug/watchlist-scroll-chart-height-g02-5.md`. |
 | zero-one-many | watchlist grid size | ✅ covered | 0 → empty state above; 1-N → existing table layout, no column reflow between 1 and many rows. |
 | loading | remove affordance (click) | ✅ covered | "Clicking removes immediately" (Copywriting Contract, Destructive confirmation row) — the zero-friction/no-confirmation design already establishes that no separate loading affordance is shown for the remove action. |
 | error | remove affordance (`DELETE` failure) | 🧪 backstop | No UI treatment is specified for a failed `DELETE /api/watchlist/{ticker}` (e.g., does the row stay, revert, or show an inline error?). Held-out: not covered by an existing pattern; flagged for the executor to decide and for a future test to confirm. |
@@ -148,7 +148,8 @@ Not applicable — `Tool: none`, no shadcn or third-party registry used this pha
 - **Remove affordance (corrected 2026-09-19, gap G-02-4):** add a 5th `<td>` to each `WatchlistRow`, right-aligned, containing a small button rendering `×` (Unicode U+00D7), `text-sm` (14px), colored `text-[var(--color-down)]`, with `aria-label="Remove {ticker} from watchlist"` and `data-testid="remove-{ticker}"`. The button is a fixed 24x24px (`h-6 w-6`) flex-centered hit box (`inline-flex items-center justify-center`) with `align-middle` to keep that height independent of the surrounding table cell's line-box baseline metrics — meeting WCAG 2.5.8's AA minimum target size. It carries a **permanent, non-hover-only** low-opacity `--color-down` resting-state background and border (`bg-[var(--color-down)]/10` + `border-[var(--color-down)]/40`, never `--color-secondary-purple` per this contract's Color section constraint), an added `hover:bg-[var(--color-down)]/20` intensification on top of that resting state, and a `focus:ring-1 focus:ring-[var(--color-primary-blue)]` keyboard-focus ring (this codebase's one established focus-ring convention, reused rather than a second one invented). The wrapping `<td>`'s padding (`py-1.5`) is intentionally left unchanged — the row's total height is already governed by the sparkline `<td>` (`py-1.5` + `Sparkline height={24}` = 36px), which the button's own cell (`py-1.5` + `h-6` = 36px) ties but does not exceed. This replaces the original spec text below, which specified only the glyph's typography/color and omitted hit-area/affordance entirely — the root cause of gap G-02-4 (see `.planning/debug/remove-button-hit-area-g02-4.md`). Must call `event.stopPropagation()` before invoking the remove handler (see UI Considerations backstop row above). The corresponding 5th `<th>` in the existing `<thead>` row is left empty (no visible label text) — it does not introduce a new header-typography element and reuses the existing header row's 12px/500 treatment unchanged if any text is ever added.
 - **Normalization display:** the input does not force client-side uppercasing as the user types — normalization (uppercase + strip) is a backend responsibility per the Phase 2 scope notes. The input's placeholder and error copy use uppercase examples (`PYPL`, `AAPL`) to set expectation without enforcing it client-side.
 - **New SSE tickers:** per the phase's scope note, a successful add must cause the new ticker to start appearing in `usePriceStreamContext()`'s `ticks`/`history`/`tickers` within seconds — the add-ticker success path should trigger a `GET /api/watchlist` refetch (or equivalent local state update) so the grid re-renders with the new row without a full page reload; a successful remove must do the same in reverse.
-- **Data-testid conventions** (extends Phase 1's `row-{ticker}` / `price-{ticker}` / `change-{ticker}` / `sparkline-{ticker}` pattern): `watchlist-add-form`, `watchlist-add-input`, `watchlist-add-submit`, `watchlist-add-error`, `remove-{ticker}`, `watchlist-empty`.
+- **Chart/watchlist height decoupling (added 2026-09-19, gap G-02-5):** `page.tsx`'s row container (`data-testid="terminal-layout-row"`) carries `lg:items-start` in addition to its existing `flex flex-col gap-4 lg:flex-row`. Without it, the default `align-items: stretch` at the `lg:` breakpoint forced `MainChart.tsx`'s `h-full` `PanelChrome` to stretch to match whatever height the watchlist panel grew to. `lg:items-start` is scoped to the `lg:` breakpoint only, so the mobile/tablet stacked full-width layout (which relies on `stretch` in `flex-col` mode to fill the column width) is unaffected. `MainChart.tsx` itself is intentionally not modified.
+- **Data-testid conventions** (extends Phase 1's `row-{ticker}` / `price-{ticker}` / `change-{ticker}` / `sparkline-{ticker}` pattern): `watchlist-add-form`, `watchlist-add-input`, `watchlist-add-submit`, `watchlist-add-error`, `remove-{ticker}`, `watchlist-empty`, `watchlist-scroll-container`, `terminal-layout-row`.
 
 ---
 
@@ -163,3 +164,20 @@ Not applicable — `Tool: none`, no shadcn or third-party registry used this pha
 - [x] Dimension 7 Inventory Provenance: PASS
 
 **Approval:** approved 2026-09-18
+
+---
+
+## Addendum — Gap Closure (G-02-4, G-02-5)
+
+**Dated:** 2026-09-19
+
+Two UAT gaps found during phase-02 retesting were closed by plan 02-05, amending this contract's
+remove-affordance and overflow-treatment sections in place (see the dated inline edits above) rather
+than altering the original approved sign-off record above this addendum:
+
+- **G-02-4** — the remove (x) button's hit box was the bare 14px glyph with no size/background,
+  under WCAG 2.5.8's 24x24px minimum. Root-caused and fixed per
+  `.planning/debug/remove-button-hit-area-g02-4.md`.
+- **G-02-5** — the watchlist panel had no height bound and the main chart's box height was coupled
+  to the watchlist's row count via `align-items: stretch`. Root-caused and fixed per
+  `.planning/debug/watchlist-scroll-chart-height-g02-5.md`.

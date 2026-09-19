@@ -119,51 +119,53 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
       >
         {error}
       </p>
-      {loading ? (
-        <table className="w-full border-collapse text-sm">
-          {tableHead}
-          <tbody>
-            <tr>
-              <td
-                colSpan={5}
-                data-testid="watchlist-loading"
-                className="py-6 text-center text-sm text-gray-500"
-              >
-                Loading watchlist…
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      ) : loadError ? (
-        <div
-          data-testid="watchlist-load-error"
-          className="px-4 py-6 text-center text-sm text-[var(--color-down)]"
-        >
-          {loadError}
-        </div>
-      ) : watchlist.length === 0 ? (
-        <div data-testid="watchlist-empty" className="px-4 py-6 text-center text-sm text-gray-500">
-          <h2 className="mb-1 font-medium text-gray-300">Watchlist is empty</h2>
-          <p>Add a ticker above to start streaming its price.</p>
-        </div>
-      ) : (
-        <table className="w-full border-collapse text-sm">
-          {tableHead}
-          <tbody>
-            {watchlist.map((entry) => (
-              <WatchlistRow
-                key={entry.ticker}
-                ticker={entry.ticker}
-                tick={ticks[entry.ticker]}
-                history={history[entry.ticker]}
-                selected={entry.ticker === selectedTicker}
-                onSelect={onSelect}
-                onRemove={handleRemove}
-              />
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div data-testid="watchlist-scroll-container" className="lg:max-h-[440px] overflow-y-auto">
+        {loading ? (
+          <table className="w-full border-collapse text-sm">
+            {tableHead}
+            <tbody>
+              <tr>
+                <td
+                  colSpan={5}
+                  data-testid="watchlist-loading"
+                  className="py-6 text-center text-sm text-gray-500"
+                >
+                  Loading watchlist…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : loadError ? (
+          <div
+            data-testid="watchlist-load-error"
+            className="px-4 py-6 text-center text-sm text-[var(--color-down)]"
+          >
+            {loadError}
+          </div>
+        ) : watchlist.length === 0 ? (
+          <div data-testid="watchlist-empty" className="px-4 py-6 text-center text-sm text-gray-500">
+            <h2 className="mb-1 font-medium text-gray-300">Watchlist is empty</h2>
+            <p>Add a ticker above to start streaming its price.</p>
+          </div>
+        ) : (
+          <table className="w-full border-collapse text-sm">
+            {tableHead}
+            <tbody>
+              {watchlist.map((entry) => (
+                <WatchlistRow
+                  key={entry.ticker}
+                  ticker={entry.ticker}
+                  tick={ticks[entry.ticker]}
+                  history={history[entry.ticker]}
+                  selected={entry.ticker === selectedTicker}
+                  onSelect={onSelect}
+                  onRemove={handleRemove}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
