@@ -166,3 +166,7 @@ Both gap-closure items (G-02-4, G-02-5) are code-complete and unit-tested. Phase
 ---
 *Phase: 02-persistent-watchlist*
 *Completed: 2026-09-19*
+
+## Self-Check: PASSED
+
+All 5 modified files and the SUMMARY.md itself found on disk; all 5 commits (acdd613, dadbab2, 91ef4e7, 2e0a6ab, e354402) found in git history.
