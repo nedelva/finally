@@ -41,11 +41,12 @@ function makeEntry(ticker: string): WatchlistEntry {
 function mockUseWatchlist(
   entries: WatchlistEntry[],
   refetch: () => Promise<void> = vi.fn(async () => {}),
+  overrides: { loading?: boolean; error?: string | null } = {},
 ) {
   vi.mocked(useWatchlist).mockReturnValue({
     watchlist: entries,
-    loading: false,
-    error: null,
+    loading: overrides.loading ?? false,
+    error: overrides.error ?? null,
     refetch,
   });
   // Hoisted so callers can assert call count — a fresh vi.fn() built inside
@@ -419,6 +420,128 @@ describe("Watchlist", () => {
     expect(empty).toHaveTextContent("Watchlist is empty");
     expect(empty).toHaveTextContent("Add a ticker above to start streaming its price.");
     expect(screen.getByTestId("watchlist-add-form")).toBeInTheDocument();
+  });
+
+  it("shows the table shell with a loading row, and hides both empty and load-error states, while the initial fetch is in flight", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([], vi.fn(async () => {}), { loading: true });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    // Table shell (header) is present from first paint -- no skeleton block
+    // that gets swapped for the real table later (G-02-1).
+    expect(screen.getAllByRole("columnheader")).toHaveLength(5);
+    expect(screen.getByTestId("watchlist-loading")).toBeInTheDocument();
+    // Discriminating negative check: today's unfixed component renders
+    // watchlist-empty whenever watchlist.length === 0, regardless of loading.
+    expect(screen.queryByTestId("watchlist-empty")).toBeNull();
+    expect(screen.queryByTestId("watchlist-load-error")).toBeNull();
+    expect(screen.getByTestId("watchlist-add-form")).toBeInTheDocument();
+  });
+
+  it("shows the hook's error verbatim in its own slot, hiding the empty state, when the initial fetch fails", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([], vi.fn(async () => {}), {
+      loading: false,
+      error: "Network error — unable to reach the server.",
+    });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    expect(screen.getByTestId("watchlist-load-error")).toHaveTextContent(
+      "Network error — unable to reach the server.",
+    );
+    expect(screen.queryByTestId("watchlist-empty")).toBeNull();
+    expect(document.querySelector("table")).toBeNull();
+  });
+
+  it("shows the load-error state ahead of a populated table when a later refetch fails with stale data present", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([makeEntry("AAPL"), makeEntry("GOOGL")], vi.fn(async () => {}), {
+      loading: false,
+      error: "Network error — unable to reach the server.",
+    });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    expect(screen.getByTestId("watchlist-load-error")).toHaveTextContent(
+      "Network error — unable to reach the server.",
+    );
+    expect(document.querySelector("table")).toBeNull();
+  });
+
+  it("still renders the genuine empty state when loading is false and there is no load error", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([], vi.fn(async () => {}), { loading: false, error: null });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument();
+  });
+});
+
+describe("Watchlist load-error and local error independence", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+    vi.mocked(addWatchlistTicker).mockReset();
+  });
+
+  it("does not clear the hook's load-error slot when a successful add-ticker submit clears the local add-error slot", async () => {
+    const user = userEvent.setup();
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    vi.mocked(addWatchlistTicker).mockResolvedValue({
+      ok: true,
+      data: { ticker: "PYPL", added_at: "2026-09-18T00:00:00.000Z" },
+    });
+    mockUseWatchlist([makeEntry("AAPL")], vi.fn(async () => {}), {
+      loading: false,
+      error: "Network error — unable to reach the server.",
+    });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    await user.type(screen.getByTestId("watchlist-add-input"), "PYPL");
+    await user.click(screen.getByTestId("watchlist-add-submit"));
+
+    await waitFor(() => expect(addWatchlistTicker).toHaveBeenCalledWith("PYPL"));
+    expect(screen.getByTestId("watchlist-add-error")).toHaveTextContent("");
+    expect(screen.getByTestId("watchlist-load-error")).toHaveTextContent(
+      "Network error — unable to reach the server.",
+    );
   });
 });
 
