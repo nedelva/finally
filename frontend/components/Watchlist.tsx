@@ -28,7 +28,10 @@ export interface WatchlistProps {
 
 export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
   const { ticks, history } = usePriceStreamContext();
-  const { watchlist, refetch } = useWatchlist();
+  // `error` is renamed to `loadError` so it cannot collide with this
+  // component's own local `error`/`setError` state below, which drives the
+  // independent add/remove-form error slot (watchlist-add-error).
+  const { watchlist, loading, error: loadError, refetch } = useWatchlist();
 
   const [inputValue, setInputValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -69,6 +72,22 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
     }
   }
 
+  // Extracted so the loading and populated branches render the identical
+  // header markup — keeping the table shell (border, header, panel width)
+  // on screen from first paint is what prevents the layout jump G-02-1's
+  // truth explicitly forbids.
+  const tableHead = (
+    <thead>
+      <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wide text-gray-500">
+        <th className="py-2 pl-3 pr-4 font-medium">Symbol</th>
+        <th className="py-2 pr-4 font-medium">Price</th>
+        <th className="py-2 pr-4 font-medium">Chg %</th>
+        <th className="py-2 pr-4 font-medium">Chart</th>
+        <th className="py-2 pr-3 font-medium"></th>
+      </tr>
+    </thead>
+  );
+
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)]">
       <form
@@ -100,22 +119,36 @@ export function Watchlist({ selectedTicker, onSelect }: WatchlistProps) {
       >
         {error}
       </p>
-      {watchlist.length === 0 ? (
+      {loading ? (
+        <table className="w-full border-collapse text-sm">
+          {tableHead}
+          <tbody>
+            <tr>
+              <td
+                colSpan={5}
+                data-testid="watchlist-loading"
+                className="py-6 text-center text-sm text-gray-500"
+              >
+                Loading watchlist…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      ) : loadError ? (
+        <div
+          data-testid="watchlist-load-error"
+          className="px-4 py-6 text-center text-sm text-[var(--color-down)]"
+        >
+          {loadError}
+        </div>
+      ) : watchlist.length === 0 ? (
         <div data-testid="watchlist-empty" className="px-4 py-6 text-center text-sm text-gray-500">
           <h2 className="mb-1 font-medium text-gray-300">Watchlist is empty</h2>
           <p>Add a ticker above to start streaming its price.</p>
         </div>
       ) : (
         <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wide text-gray-500">
-              <th className="py-2 pl-3 pr-4 font-medium">Symbol</th>
-              <th className="py-2 pr-4 font-medium">Price</th>
-              <th className="py-2 pr-4 font-medium">Chg %</th>
-              <th className="py-2 pr-4 font-medium">Chart</th>
-              <th className="py-2 pr-3 font-medium"></th>
-            </tr>
-          </thead>
+          {tableHead}
           <tbody>
             {watchlist.map((entry) => (
               <WatchlistRow
