@@ -1,14 +1,20 @@
 ---
-status: diagnosed
+status: testing
 phase: 02-persistent-watchlist
-source: [02-VERIFICATION.md, 02-04-SUMMARY.md]
+source: [02-VERIFICATION.md]
 started: 2026-09-18T13:35:00Z
-updated: 2026-09-19T13:55:00Z
+updated: 2026-09-19T15:05:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+number: 6
+name: Live re-test of G-02-4 (remove-button hit area)
+expected: |
+  Each remove button shows a small, permanently visible reddish box around the × glyph (not
+  hover-only, never purple); every click — including near-edge clicks — removes the ticker on
+  the first try; row heights look unchanged from before this fix; a blue focus ring appears on Tab.
+awaiting: user response
 
 ## Tests
 
@@ -35,14 +41,42 @@ severity: major
 ### 5. Failed DELETE error message visibility
 expected: Force removeWatchlistTicker to reject (e.g. simulate a failed DELETE) and confirm the UI treatment renders visibly and acceptably — the reused watchlist-add-error inline slot should display the server's error text.
 result: pass
+
+### 6. Live re-test of G-02-4 (remove-button hit area)
+expected: |
+  Start the app in a real browser. Click a watchlist row's × remove button several times across
+  several rows, including near the edges of the visible colored box, not dead-center. Tab to a
+  remove button with the keyboard. Each remove button should show a small, permanently visible
+  reddish box around the × glyph (not hover-only, never purple); every click — including
+  near-edge clicks — should remove the ticker on the first try; row heights should look unchanged
+  from before this fix; a blue focus ring should appear on Tab.
+result: [pending]
+
+### 7. Live re-test of G-02-5 (watchlist scroll / chart-height decoupling)
+expected: |
+  In a real browser at desktop (lg:) width, use the add-ticker form to add ~15-20 tickers (enough
+  to exceed the watchlist panel's normal height) and observe: (a) whether the browser/page-level
+  scrollbar appears or the watchlist panel itself scrolls internally, (b) whether the add-ticker
+  form and its error slot stay visible while scrolled down in the list, (c) whether the main
+  chart's bordered box height stays constant as tickers are added/removed. Then narrow the window
+  below the lg: breakpoint with the same long watchlist and confirm the watchlist/chart stack
+  full-width with normal page scroll and no nested internal scrollbar.
+  This item also closes the older 02-01 "no-scroll/max-size" must-have (same underlying concern).
+result: [pending]
+
+### 8. Concurrent same-ticker add race (carried forward, unchanged)
+expected: |
+  Fire two concurrent add_watchlist_ticker("XXXX") calls against the same SQLite file and confirm
+  exactly one row exists, with the loser surfacing as 409, not 500 or a silent duplicate.
+  (Backend-only; unaffected by 02-05, which touched only frontend files.)
 result: [pending]
 
 ## Summary
 
-total: 5
-passed: 3
+total: 8
+passed: 5
 issues: 2
-pending: 0
+pending: 3
 skipped: 0
 blocked: 0
 
