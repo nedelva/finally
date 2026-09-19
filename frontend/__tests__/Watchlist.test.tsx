@@ -532,6 +532,107 @@ describe("Watchlist", () => {
 
     expect(screen.getByTestId("watchlist-empty")).toBeInTheDocument();
   });
+
+  it("bounds the populated table in an internally-scrolling container that excludes the add-ticker form (G-02-5)", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([makeEntry("AAPL")]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const scrollContainer = screen.getByTestId("watchlist-scroll-container");
+    expect(scrollContainer.classList.contains("overflow-y-auto")).toBe(true);
+    expect(scrollContainer.className).toContain("lg:max-h-[440px]");
+    const form = screen.getByTestId("watchlist-add-form");
+    expect(scrollContainer.contains(form)).toBe(false);
+  });
+
+  it("wraps the loading branch in the same bounded scroll container (G-02-5)", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([], vi.fn(async () => {}), { loading: true });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const scrollContainer = screen.getByTestId("watchlist-scroll-container");
+    expect(scrollContainer.classList.contains("overflow-y-auto")).toBe(true);
+    expect(scrollContainer.className).toContain("lg:max-h-[440px]");
+    const form = screen.getByTestId("watchlist-add-form");
+    expect(scrollContainer.contains(form)).toBe(false);
+  });
+
+  it("wraps the load-error branch in the same bounded scroll container (G-02-5)", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([], vi.fn(async () => {}), {
+      loading: false,
+      error: "Network error — unable to reach the server.",
+    });
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const scrollContainer = screen.getByTestId("watchlist-scroll-container");
+    expect(scrollContainer.classList.contains("overflow-y-auto")).toBe(true);
+    expect(scrollContainer.className).toContain("lg:max-h-[440px]");
+    const form = screen.getByTestId("watchlist-add-form");
+    expect(scrollContainer.contains(form)).toBe(false);
+  });
+
+  it("wraps the empty branch in the same bounded scroll container (G-02-5)", () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+
+    mockUseWatchlist([]);
+
+    render(
+      <PriceStreamProvider>
+        <Watchlist />
+      </PriceStreamProvider>,
+    );
+
+    const scrollContainer = screen.getByTestId("watchlist-scroll-container");
+    expect(scrollContainer.classList.contains("overflow-y-auto")).toBe(true);
+    expect(scrollContainer.className).toContain("lg:max-h-[440px]");
+    const form = screen.getByTestId("watchlist-add-form");
+    expect(scrollContainer.contains(form)).toBe(false);
+  });
+});
+
+describe("Terminal layout decoupling (G-02-5)", () => {
+  afterEach(() => {
+    vi.mocked(useWatchlist).mockReset();
+  });
+
+  it("scopes the row's cross-axis alignment to lg: so MainChart's height no longer stretches to match the watchlist", async () => {
+    // @ts-expect-error -- test double, not a full EventSource implementation
+    global.EventSource = FakeEventSource;
+    FakeEventSource.instances = [];
+    mockUseWatchlist([makeEntry("AAPL")]);
+
+    render(<Page />);
+
+    const row = screen.getByTestId("terminal-layout-row");
+    expect(row.classList.contains("lg:items-start")).toBe(true);
+  });
 });
 
 describe("Watchlist load-error and local error independence", () => {
