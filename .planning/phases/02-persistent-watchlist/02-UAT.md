@@ -1,20 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 02-persistent-watchlist
 source: [02-VERIFICATION.md]
 started: 2026-09-18T13:35:00Z
-updated: 2026-09-19T15:05:00Z
+updated: 2026-09-19T15:20:00Z
 ---
 
 ## Current Test
 
-number: 6
-name: Live re-test of G-02-4 (remove-button hit area)
-expected: |
-  Each remove button shows a small, permanently visible reddish box around the × glyph (not
-  hover-only, never purple); every click — including near-edge clicks — removes the ticker on
-  the first try; row heights look unchanged from before this fix; a blue focus ring appears on Tab.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -50,7 +44,7 @@ expected: |
   reddish box around the × glyph (not hover-only, never purple); every click — including
   near-edge clicks — should remove the ticker on the first try; row heights should look unchanged
   from before this fix; a blue focus ring should appear on Tab.
-result: [pending]
+result: pass
 
 ### 7. Live re-test of G-02-5 (watchlist scroll / chart-height decoupling)
 expected: |
@@ -62,21 +56,21 @@ expected: |
   below the lg: breakpoint with the same long watchlist and confirm the watchlist/chart stack
   full-width with normal page scroll and no nested internal scrollbar.
   This item also closes the older 02-01 "no-scroll/max-size" must-have (same underlying concern).
-result: [pending]
+result: pass
 
 ### 8. Concurrent same-ticker add race (carried forward, unchanged)
 expected: |
   Fire two concurrent add_watchlist_ticker("XXXX") calls against the same SQLite file and confirm
   exactly one row exists, with the loser surfacing as 409, not 500 or a silent duplicate.
   (Backend-only; unaffected by 02-05, which touched only frontend files.)
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 8
-passed: 5
+passed: 6
 issues: 2
-pending: 3
+pending: 0
 skipped: 0
 blocked: 0
 
@@ -84,7 +78,7 @@ blocked: 0
 
 - gap_id: G-02-4
   truth: "The watchlist row remove (×) control is easy to hit with a mouse — a reasonably sized, clearly-actionable target."
-  status: failed
+  status: resolved
   reason: "User reported: the delete action is not user-friendly; the × remove glyph is too small and require very precise positioning of the mouse cursor and sometimes it needs two-three clicks until is triggered. Upon DevTools inspection I see the element is an html button; I would prefer a different styling that makes it stand out from the surrounding background. Other than that, I am happy with it."
   severity: minor
   test: 2
@@ -99,10 +93,12 @@ blocked: 0
     - "Visible resting-state background/border using --color-down (not purple, per spec constraint) so it stands out from the surrounding background, per the user's explicit request — not hover-only"
     - "Reuse the existing focus:ring-1 focus:ring-[var(--color-primary-blue)] convention (Watchlist.tsx:105) for keyboard focus"
   debug_session: ".planning/debug/remove-button-hit-area-g02-4.md"
+  resolved_by: "02-05"
+  resolved_at: "2026-09-19T15:05:00Z"
 
 - gap_id: G-02-5
   truth: "The watchlist panel scrolls internally (or has an intentional overflow treatment) once it exceeds one screen's worth of rows — the rest of the page layout, including the main chart, is unaffected by watchlist row count."
-  status: failed
+  status: resolved
   reason: "User reported: adding more tickers make the panel grow larger. as a result only the page get a scroll bar. Another side effect is that the chart grows and keeps having the same height as the watch list panel."
   severity: major
   test: 4
@@ -118,6 +114,8 @@ blocked: 0
     - "Bounded scroll container on the Watchlist panel (max-h-* + overflow-y-auto on Watchlist.tsx:92)"
     - "Decouple MainChart from the row's stretch behavior (items-start on page.tsx:43's row div, or remove/replace h-full on MainChart.tsx:41) — independent of the scroll fix, both are needed"
   debug_session: ".planning/debug/watchlist-scroll-chart-height-g02-5.md"
+  resolved_by: "02-05"
+  resolved_at: "2026-09-19T15:05:00Z"
 
 - gap_id: G-02-1
   truth: "Reload the app in a browser; the watchlist grid appears populated with tickers on first paint (no skeleton/spinner flash, no layout jump)."
