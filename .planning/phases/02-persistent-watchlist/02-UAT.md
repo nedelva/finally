@@ -1,54 +1,74 @@
 ---
-status: testing
+status: diagnosed
 phase: 02-persistent-watchlist
 source: [02-VERIFICATION.md, 02-04-SUMMARY.md]
 started: 2026-09-18T13:35:00Z
-updated: 2026-09-19T13:15:00Z
+updated: 2026-09-19T13:55:00Z
 ---
 
 ## Current Test
 
-number: 1
-name: Initial watchlist load has no loading flicker
-expected: |
-  Reload the app in a browser. The watchlist grid appears populated with tickers on first
-  paint — no skeleton/spinner flash, no layout jump. (Retest: 02-04 fixed Watchlist.tsx to
-  render a loading state that reuses the same table shell/header as the populated state,
-  specifically to avoid the layout jump this test checks for.)
-awaiting: user response
+[testing complete]
 
 ## Tests
 
 ### 1. Initial watchlist load has no loading flicker
 expected: No visible skeleton/spinner flash or layout jump — the watchlist grid appears populated on first paint. Retest after 02-04's fix (shared table shell across loading/populated states).
-result: [pending]
+result: pass
 
 ### 2. Add/remove ticker visual and interaction confirmation
-expected: In a running browser, submit the add-ticker form (purple button, "Adding…" in-flight state) and click the × remove glyph on a row; confirm styling, color tokens (purple submit button, red × glyph, inline error text), disabled/"Adding…" state while in flight, and an immediate, visually clean row removal with no flash/flicker or accidental navigation to the chart. Retest: the earlier 405 was a stale-backend artifact (G-02-2, resolved), not a code defect — this is the first real attempt at this test.
-result: [pending]
+expected: In a running browser, submit the add-ticker form (purple button, "Adding…" in-flight state) and click the × remove glyph on a row; confirm styling, color tokens (purple submit button, red × glyph, inline error text), disabled/"Adding…" state while in flight, and an immediate, visually clean row removal with no flash/flicker or accidental navigation to the chart.
+result: issue
+reported: "the delete action is not user-friendly; the × remove glyph is too small and require very precise positioning of the mouse cursor and sometimes it needs two-three clicks until is triggered. Upon DevTools inspection I see the element is an html button; I would prefer a different styling that makes it stand out from the surrounding background. Other than that, I am happy with it."
+severity: minor
 
 ### 3. Failed initial watchlist fetch shows a visible error
-expected: Disconnect the backend (or force GET /api/watchlist to fail) while the app is loaded, and observe what the watchlist panel shows. A distinct, visible error message should now appear (dedicated watchlist-load-error slot), not an indistinguishable empty watchlist. Retest after 02-04's fix.
-result: [pending]
+expected: Disconnect the backend (or force GET /api/watchlist to fail) while the app is loaded, and observe what the watchlist panel shows. A distinct, visible error message should now appear, not an indistinguishable empty watchlist.
+result: pass
 
 ### 4. Watchlist panel overflow/scroll behavior with many tickers
-expected: Add tickers until the watchlist panel exceeds one screen's worth of rows and observe the panel's layout behavior. The panel should either scroll internally or have some intentional overflow treatment — rows should not silently push the rest of the page layout. This was never actually executed before (blocked by the stale-backend 405); no code addresses overflow/scroll in any of the four plans.
-result: [pending]
+expected: Add tickers until the watchlist panel exceeds one screen's worth of rows and observe the panel's layout behavior. The panel should either scroll internally or have some intentional overflow treatment — rows should not silently push the rest of the page layout.
+result: issue
+reported: "adding more tickers make the panel grow larger. as a result only the page get a scroll bar. Another side effect is that the chart grows and keeps having the same height as the watch list panel."
+severity: major
 
 ### 5. Failed DELETE error message visibility
-expected: Force removeWatchlistTicker to reject (e.g. simulate a failed DELETE) and confirm the UI treatment renders visibly and acceptably — the reused watchlist-add-error inline slot should display the server's error text. This was never actually executed before (blocked by the stale-backend 405).
+expected: Force removeWatchlistTicker to reject (e.g. simulate a failed DELETE) and confirm the UI treatment renders visibly and acceptably — the reused watchlist-add-error inline slot should display the server's error text.
+result: pass
 result: [pending]
 
 ## Summary
 
 total: 5
-passed: 0
-issues: 0
-pending: 5
+passed: 3
+issues: 2
+pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+- gap_id: G-02-4
+  truth: "The watchlist row remove (×) control is easy to hit with a mouse — a reasonably sized, clearly-actionable target."
+  status: failed
+  reason: "User reported: the delete action is not user-friendly; the × remove glyph is too small and require very precise positioning of the mouse cursor and sometimes it needs two-three clicks until is triggered. Upon DevTools inspection I see the element is an html button; I would prefer a different styling that makes it stand out from the surrounding background. Other than that, I am happy with it."
+  severity: minor
+  test: 2
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
+
+- gap_id: G-02-5
+  truth: "The watchlist panel scrolls internally (or has an intentional overflow treatment) once it exceeds one screen's worth of rows — the rest of the page layout, including the main chart, is unaffected by watchlist row count."
+  status: failed
+  reason: "User reported: adding more tickers make the panel grow larger. as a result only the page get a scroll bar. Another side effect is that the chart grows and keeps having the same height as the watch list panel."
+  severity: major
+  test: 4
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
 
 - gap_id: G-02-1
   truth: "Reload the app in a browser; the watchlist grid appears populated with tickers on first paint (no skeleton/spinner flash, no layout jump)."
