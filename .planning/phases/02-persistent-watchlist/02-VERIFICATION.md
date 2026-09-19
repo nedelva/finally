@@ -4,7 +4,7 @@ verified: 2026-09-19T16:20:00Z
 status: passed
 score: 41/41 must-haves verified
 covered_files: [".planning/REQUIREMENTS.md", ".planning/ROADMAP.md", ".planning/debug/add-ticker-405-g02-2.md", ".planning/debug/remove-button-hit-area-g02-4.md", ".planning/debug/watchlist-empty-on-load.md", ".planning/debug/watchlist-load-error-silent.md", ".planning/debug/watchlist-scroll-chart-height-g02-5.md", ".planning/phases/02-persistent-watchlist/02-01-PLAN.md", ".planning/phases/02-persistent-watchlist/02-01-SUMMARY.md", ".planning/phases/02-persistent-watchlist/02-02-PLAN.md", ".planning/phases/02-persistent-watchlist/02-02-SUMMARY.md", ".planning/phases/02-persistent-watchlist/02-03-PLAN.md", ".planning/phases/02-persistent-watchlist/02-03-SUMMARY.md", ".planning/phases/02-persistent-watchlist/02-04-PLAN.md", ".planning/phases/02-persistent-watchlist/02-04-SUMMARY.md", ".planning/phases/02-persistent-watchlist/02-05-PLAN.md", ".planning/phases/02-persistent-watchlist/02-05-SUMMARY.md", ".planning/phases/02-persistent-watchlist/02-SECURITY.md", ".planning/phases/02-persistent-watchlist/02-UAT.md", ".planning/phases/02-persistent-watchlist/02-UI-REVIEW.md", ".planning/phases/02-persistent-watchlist/02-UI-SPEC.md", ".planning/phases/02-persistent-watchlist/02-VALIDATION.md", "backend/app/api/watchlist.py", "backend/app/db/connection.py", "backend/app/db/init.py", "backend/app/db/repository.py", "backend/app/db/schema.py", "backend/app/main.py", "backend/app/market/simulator.py", "backend/app/market/ticker.py", "db/.gitkeep", "frontend/__tests__/Watchlist.test.tsx", "frontend/app/page.tsx", "frontend/components/Watchlist.tsx", "frontend/components/WatchlistRow.tsx", "frontend/lib/hooks.ts"]
-covered_digest: "v1:sha256:9621745b0ed1a9641c3058c35ce655b8fb86521ab2dc86a04d7a09e86440a201"
+covered_digest: "v1:sha256:68cbf606ed8d8c7d0ae08949e715702ea0cc3d460a3d041d3e5da9535f9a8316"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
@@ -20,6 +20,7 @@ re_verification:
     - item: "P-02-01/P-02-02a/P-02-02b/P-02-03 (4 judgment-tier prohibitions) — explicitly reviewed and signed off by the user against the code evidence gathered this session. See prohibitions_signoff below."
   human_items_still_open: []
 prohibitions_signoff:
+
   - statement: "P-02-01 — MUST NOT present a fabricated, zero, or stale-guess price for a ticker the price cache cannot price."
     plan: "02-01"
     verification: judgment
