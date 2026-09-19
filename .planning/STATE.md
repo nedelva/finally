@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Persistent Watchlist
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-09-19T10:11:31.862Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-09-19T12:18:23.413Z"
 last_activity: 2026-09-19
-last_activity_desc: Phase 02 execution started
-state_head: 5f26b23ef77ea9124c8b22178adf346fb4660a32
+last_activity_desc: Phase 02 execution resumed (wave continue)
+state_head: 0eecdb1e28d26b681894c200155ada71a4882110
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 9
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 10
   percent: 20
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-09-17)
 ## Current Position
 
 Phase: 02 (Persistent Watchlist) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 02
-Last activity: 2026-09-19 — Phase 02 execution started
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-09-19 — Phase 02 execution resumed (wave continue)
 
 Progress: [██░░░░░░░░] 20%
 
@@ -66,6 +66,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 02 P01 | 15min | 3 tasks | 21 files |
 | Phase 02 P02 | 13min | 3 tasks | 11 files |
 | Phase 02 P03 | 20min | 2 tasks | 9 files |
+| Phase 02 P05 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02]: Repository-level TDD RED tests use a raise-NotImplementedError stub (not an unresolved import) so pytest collection succeeds and the named test fails on the planned behavior, not at collection time
 - [Phase 02]: [Phase 02]: Watchlist.tsx panel border/background classes moved from <table> to a wrapper <div> since a <form> cannot be a child of <table> before <thead>
 - [Phase 02]: DELETE /api/watchlist/{ticker} mirrors POST's normalize->act->notify ordering; empty state replaces the whole table, not just tbody; failed DELETE reuses the existing add-ticker error slot — Consistency with 02-02's established route pattern and the plan's own backstop guidance to avoid inventing a second error-rendering mechanism
+- [Phase 02]: [Phase 02]: Wrapped only the loading/loadError/empty/table branch in watchlist-scroll-container, not the whole panel div - keeps the add-ticker form always visible above the scrollable region, deliberate deviation from the debug session's literal Watchlist.tsx:92 fix location
+- [Phase 02]: [Phase 02]: Left the remove <td>'s py-1.5 padding untouched when giving the remove button a 24x24px hit box - the sparkline <td> (36px) was already the row's tallest cell and remains tied, not exceeded
+- [Phase 02]: [Phase 02]: Did not modify MainChart.tsx to fix the chart/watchlist height coupling - lg:items-start on page.tsx's row container alone removes the stretch constraint MainChart's h-full needed to couple against
 
 ### Pending Todos
 
@@ -120,6 +124,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-18T11:14:41.827Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-09-19T12:18:23.387Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

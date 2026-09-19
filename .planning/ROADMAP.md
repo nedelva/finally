@@ -78,7 +78,7 @@ Plans:
   3. Reloading the browser shows the user's own watchlist, not the built-in default list
   4. A malformed or empty ticker entry is rejected with a visible message and leaves the watchlist unchanged
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 
 Plans:
 **Wave 1**
@@ -99,7 +99,7 @@ Plans:
 
 **Wave 5** *(gap closure — blocked on Wave 4 completion)*
 
-- [ ] 02-05-PLAN.md — Fix remove-button hit area/affordance and watchlist-panel scroll/chart-height coupling (closes UAT gaps G-02-4, G-02-5)
+- [x] 02-05-PLAN.md — Fix remove-button hit area/affordance and watchlist-panel scroll/chart-height coupling (closes UAT gaps G-02-4, G-02-5)
 
 **UI hint**: yes
 
@@ -192,7 +192,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
-| 2. Persistent Watchlist | 4/5 | In Progress|  |
+| 2. Persistent Watchlist | 5/5 | In Progress|  |
 | 3. Trading & Portfolio | 0/TBD | Not started | - |
 | 4. AI Copilot | 0/TBD | Not started | - |
 | 5. One-Command Delivery | 0/TBD | Not started | - |
