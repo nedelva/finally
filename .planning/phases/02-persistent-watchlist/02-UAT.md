@@ -54,10 +54,17 @@ blocked: 0
   reason: "User reported: the delete action is not user-friendly; the × remove glyph is too small and require very precise positioning of the mouse cursor and sometimes it needs two-three clicks until is triggered. Upon DevTools inspection I see the element is an html button; I would prefer a different styling that makes it stand out from the surrounding background. Other than that, I am happy with it."
   severity: minor
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "WatchlistRow.tsx:109-118's remove button has className=\"text-sm text-[var(--color-down)]\" — no padding, no min-width/min-height, no background/border. Its clickable hit-box is exactly the glyph's intrinsic content box for a single 14px x character (~8-10px x ~17-20px), far under WCAG 2.5.8 AA's 24x24px minimum. Tailwind v4 Preflight actively zeroes the browser's default button padding/border, so nothing compensates. The wrapping <td> carries visual padding (py-1.5 pr-3) that makes the clickable-looking zone larger than the button's true hit box, so near-misses silently fail — explaining both 'requires precise positioning' and '2-3 clicks to trigger'. This is a design-contract gap, not an implementation deviation: 02-UI-SPEC.md:148 specifies only the glyph's typography/color and never specifies a hit-area size or background/hover affordance — the implementation is spec-compliant, the spec under-specified the control. Ruled out: overlapping siblings, event-bubbling/double-fire, remount-during-click (rows are keyed by ticker, not remounted on stream ticks)."
+  artifacts:
+    - path: "frontend/components/WatchlistRow.tsx"
+      issue: "Remove button (lines 109-118) has zero padding/background/border/hover/focus classes — hit box is the bare glyph"
+    - path: ".planning/phases/02-persistent-watchlist/02-UI-SPEC.md"
+      issue: "Line 148 (and color table line 79, which forbids purple here — reserved for Add Ticker) specifies only typography/color, never hit-area size or resting-state affordance"
+  missing:
+    - "Fixed ~24x24px flex-centered hit box around the glyph (e.g. inline-flex items-center justify-center h-6 w-6), sized to fit inside the current ~32px row height"
+    - "Visible resting-state background/border using --color-down (not purple, per spec constraint) so it stands out from the surrounding background, per the user's explicit request — not hover-only"
+    - "Reuse the existing focus:ring-1 focus:ring-[var(--color-primary-blue)] convention (Watchlist.tsx:105) for keyboard focus"
+  debug_session: ".planning/debug/remove-button-hit-area-g02-4.md"
 
 - gap_id: G-02-5
   truth: "The watchlist panel scrolls internally (or has an intentional overflow treatment) once it exceeds one screen's worth of rows — the rest of the page layout, including the main chart, is unaffected by watchlist row count."
@@ -65,10 +72,18 @@ blocked: 0
   reason: "User reported: adding more tickers make the panel grow larger. as a result only the page get a scroll bar. Another side effect is that the chart grows and keeps having the same height as the watch list panel."
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Two coupled defects, one shared upstream trigger (this was explicitly flagged as an unresolved design decision at 02-01 planning time, 02-01-PLAN.md:50, never actioned since). (1) No scroll bound: Watchlist.tsx:92's outer panel div has no max-h-*/overflow-y-auto; height is purely content-driven (one row per entry, uncapped), and no ancestor constrains height either, so the browser falls back to page-level scroll. (2) Chart height coupling: page.tsx:43's row container (flex flex-col gap-4 lg:flex-row) sets no items-start override, so it uses flexbox's default align-items: stretch at the lg: breakpoint. Combined with MainChart.tsx:41's PanelChrome root div (flex h-full flex-col ...), MainChart's bordered box resolves h-full against its stretched parent — inheriting whichever sibling is tallest, which is always the unbounded, growing Watchlist. The chart's drawn content stays fixed at PANEL_HEIGHT=320 (MainChart.tsx:31,137) — only the empty space in the surrounding box grows, matching the user's exact wording. IMPORTANT for the fix: bounding Watchlist's height alone fixes symptom 1 but only masks symptom 2 (if the cap is set below MainChart's natural height, the coupling mechanism reverses and Watchlist gets stretched to match MainChart instead) — true decoupling requires separately touching the align-items/h-full pairing."
+  artifacts:
+    - path: "frontend/components/Watchlist.tsx"
+      issue: "Line 92 panel wrapper missing height bound / scroll treatment"
+    - path: "frontend/app/page.tsx"
+      issue: "Line 43 flex row missing items-start override (defaults to stretch)"
+    - path: "frontend/components/MainChart.tsx"
+      issue: "Line 41 PanelChrome's h-full is the piece that visibly inherits the stretched height from the row"
+  missing:
+    - "Bounded scroll container on the Watchlist panel (max-h-* + overflow-y-auto on Watchlist.tsx:92)"
+    - "Decouple MainChart from the row's stretch behavior (items-start on page.tsx:43's row div, or remove/replace h-full on MainChart.tsx:41) — independent of the scroll fix, both are needed"
+  debug_session: ".planning/debug/watchlist-scroll-chart-height-g02-5.md"
 
 - gap_id: G-02-1
   truth: "Reload the app in a browser; the watchlist grid appears populated with tickers on first paint (no skeleton/spinner flash, no layout jump)."
