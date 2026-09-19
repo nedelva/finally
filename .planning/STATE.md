@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 02
-current_phase_name: Persistent Watchlist
-status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-09-19T12:18:23.413Z"
+current_phase: 3
+current_phase_name: Trading & Portfolio
+status: planning
+stopped_at: Phase 02 complete, ready to plan Phase 3
+last_updated: "2026-09-19T14:17:38.761Z"
 last_activity: 2026-09-19
-last_activity_desc: Phase 02 execution resumed (wave continue)
-state_head: 0eecdb1e28d26b681894c200155ada71a4882110
+last_activity_desc: Phase 02 complete, transitioned to Phase 3
+state_head: 98a1aab0fef96dda5fabb232a3c5c2d1abf73533
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
   completed_plans: 10
-  percent: 20
+  percent: 40
 ---
 
 # Project State
@@ -23,22 +23,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-17)
 
 **Core value:** The user can watch live prices stream, place simulated trades, and have an AI assistant that can see the portfolio and act on it in natural language — all in one dependency-free `docker run`.
-**Current focus:** Phase 02 — Persistent Watchlist
+**Current focus:** Phase 3 — Trading & Portfolio
 
 ## Current Position
 
-Phase: 02 (Persistent Watchlist) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute
-Last activity: 2026-09-19 — Phase 02 execution resumed (wave continue)
+Phase: 3 — Trading & Portfolio
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-19 — Phase 02 complete, transitioned to Phase 3
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
+- Total plans completed: 10
 - Average duration: —
 - Total execution time: 0 hours
 
@@ -47,6 +47,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 5 | - | - |
+| 02 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -110,9 +111,9 @@ None yet.
 
 [Issues that affect future work]
 
-- Market-data subsystem is built and tested but never mounted — `backend/app/` has no FastAPI entrypoint. Phase 1 is the first time any of it runs in a server.
 - Seed prices in `backend/app/market/seed_prices.py` are stale (NVDA 800, MSFT 420); simulator demos will look dated until refreshed.
 - `.env.example` does not exist; `OPENROUTER_API_KEY` is required from Phase 4 onward.
+- Cache version-counter-skipped-on-empty-cache bug and daily-vs-tick-to-tick % change spec mismatch (`.planning/codebase/CONCERNS.md`) remain unfixed — deferred to whichever future phase touches that code path.
 
 ## Deferred Items
 
@@ -125,5 +126,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-09-19T12:18:23.387Z
-Stopped at: Completed 02-05-PLAN.md
+Stopped at: Phase 02 complete, ready to plan Phase 3
 Resume file: None

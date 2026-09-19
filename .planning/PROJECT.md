@@ -18,20 +18,22 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 - ✓ Thread-safe in-memory `PriceCache` with version-based change detection (single writer, many readers) — existing
 - ✓ SSE price-stream endpoint factory (`/api/stream/prices`, not yet mounted into a running app) — existing
 - ✓ Backend test suite for the market-data subsystem: 73 tests, 84% coverage (pytest + pytest-asyncio) — existing
+- ✓ FastAPI app assembled and wired to serve the frontend static export + mount the SSE router; module-level router-singleton anti-pattern fixed — Phase 1
+- ✓ Dark terminal UI: watchlist grid with live SSE-streamed prices, price-flash animations, sparklines, connection status indicator — Phase 1
+- ✓ SQLite DB with lazy initialization: `users_profile`, `watchlist`, `positions`, `trades`, `portfolio_snapshots`, `chat_messages` tables, seeded with $10k cash and the 10 default tickers, per PLAN.md §7 — Phase 2
+- ✓ Watchlist REST API: `GET/POST /api/watchlist`, `DELETE /api/watchlist/{ticker}`, per PLAN.md §8 — Phase 2
+- ✓ Watchlist UI: add/remove tickers, loading/error states, scroll-bounded panel decoupled from chart height, accessible remove-button hit target — Phase 2
 
 (See `.planning/codebase/ARCHITECTURE.md` and `STACK.md` for full detail on what's built. `planning/MARKET_DATA_SUMMARY.md` is the original component summary.)
 
 ### Active
 
-- [ ] FastAPI app assembled and wired to serve the frontend static export + mount the existing SSE router (fixing the module-level router-singleton anti-pattern found in codebase mapping — see Context)
-- [ ] SQLite DB with lazy initialization: `users_profile`, `watchlist`, `positions`, `trades`, `portfolio_snapshots`, `chat_messages` tables, seeded with $10k cash and the 10 default tickers, per PLAN.md §7
 - [ ] Portfolio REST API: `GET /api/portfolio`, `POST /api/portfolio/trade`, `GET /api/portfolio/history`, per PLAN.md §8
-- [ ] Watchlist REST API: `GET/POST /api/watchlist`, `DELETE /api/watchlist/{ticker}`, per PLAN.md §8
 - [ ] LLM chat integration: `POST /api/chat` via LiteLLM → OpenRouter (Cerebras inference, `openrouter/openai/gpt-oss-120b`), structured-output trade/watchlist auto-execution, `LLM_MOCK` mode for tests, per PLAN.md §9
-- [ ] Frontend UI (Next.js static export, Tailwind dark theme): watchlist grid with price-flash + sparklines, main chart, portfolio heatmap, P&L chart, positions table, trade bar, AI chat panel, header with connection status — per PLAN.md §10
+- [ ] Frontend UI (Next.js static export, Tailwind dark theme): main chart, portfolio heatmap, P&L chart, positions table, trade bar, AI chat panel — per PLAN.md §10
 - [ ] Docker packaging: multi-stage Dockerfile, start/stop scripts (mac + Windows), volume-mounted SQLite — per PLAN.md §11
 - [ ] E2E test suite (Playwright, `LLM_MOCK=true`) per PLAN.md §12
-- [ ] Fix known market-data backend issues while wiring the API layer (not a separate cleanup phase): module-level SSE router singleton, version-counter-skipped-on-empty-cache bug, daily-vs-tick-to-tick % change spec mismatch — see `.planning/codebase/CONCERNS.md`
+- [ ] Version-counter-skipped-on-empty-cache bug, daily-vs-tick-to-tick % change spec mismatch — see `.planning/codebase/CONCERNS.md` (router singleton fixed in Phase 1)
 
 ### Out of Scope
 
@@ -66,6 +68,7 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 | Codebase mapped via `/gsd-map-codebase` before defining requirements | Existing market-data backend needed to be understood precisely (what's built vs. what CONCERNS.md flags as gaps) before scoping the roadmap | ✓ Good |
 | Known market-data backend gaps (router singleton, version-counter bug, % change spec mismatch) folded into the upcoming API-layer phase rather than a dedicated cleanup phase | User's explicit choice during init questioning — fix while wiring, don't block on a separate pass | — Pending |
 | No scope changes from PLAN.md; build in dependency order (DB → API/portfolio → frontend → LLM chat → Docker) | User confirmed no priority changes during init questioning | — Pending |
+| Watchlist remove-button hit target sized to ~24x24px with a permanent (not hover-only) background affordance, and the watchlist panel bounded with internal scroll decoupled from main-chart height | UAT surfaced both as real usability gaps (sub-24px WCAG-violating hit box; unbounded panel driving page scroll and stretching the chart) — fixed in gap-closure plan 02-05, reconfirmed live | ✓ Good |
 
 ## Evolution
 
@@ -85,4 +88,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-17 after initialization*
+*Last updated: 2026-09-19 after Phase 2*
