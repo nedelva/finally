@@ -292,6 +292,32 @@ describe("WatchlistRow remove affordance", () => {
     expect(onRemove).toHaveBeenCalledWith("AAPL");
     expect(onSelect).not.toHaveBeenCalled();
   });
+
+  it("gives the remove button a fixed 24x24px, flex-centered, baseline-independent hit box (G-02-4)", () => {
+    renderRow({ ticker: "AAPL" });
+
+    const button = screen.getByTestId("remove-AAPL");
+    expect(button.classList.contains("h-6")).toBe(true);
+    expect(button.classList.contains("w-6")).toBe(true);
+    expect(button.classList.contains("inline-flex")).toBe(true);
+    expect(button.classList.contains("align-middle")).toBe(true);
+  });
+
+  it("gives the remove button a permanent destructive-token background/border, never purple (G-02-4)", () => {
+    renderRow({ ticker: "AAPL" });
+
+    const button = screen.getByTestId("remove-AAPL");
+    expect(button.className).toContain("bg-[var(--color-down)]/10");
+    expect(button.className).toContain("border-[var(--color-down)]/40");
+    expect(button.className).not.toContain("secondary-purple");
+  });
+
+  it("gives the remove button the existing blue keyboard-focus ring convention (G-02-4)", () => {
+    renderRow({ ticker: "AAPL" });
+
+    const button = screen.getByTestId("remove-AAPL");
+    expect(button.className).toContain("focus:ring-[var(--color-primary-blue)]");
+  });
 });
 
 describe("Watchlist", () => {
