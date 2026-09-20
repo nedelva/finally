@@ -201,6 +201,20 @@ class TestExecuteTrade:
         assert get_cash_balance() == cash_before
         assert get_positions() == []
 
+    @pytest.mark.parametrize("quantity", [float("nan"), float("inf"), float("-inf")])
+    def test_non_finite_quantity_raises_before_any_write(self, initialized_db, quantity):
+        # CR-01: a NaN/Infinity quantity evaluates every `<=`/`>` comparison
+        # as False in Python, so it must be rejected explicitly rather than
+        # relying on the numeric guards further down.
+        cache = _seeded_cache({"AAPL": 100.0})
+        cash_before = get_cash_balance()
+
+        with pytest.raises(ValueError):
+            execute_trade(cache, "AAPL", "buy", quantity)
+
+        assert get_cash_balance() == cash_before
+        assert get_positions() == []
+
     def test_ticker_not_on_watchlist_raises_even_with_a_cache_price(self, initialized_db):
         cache = PriceCache()
         cache.update(ticker="ZZZZ", price=50.0)

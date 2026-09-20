@@ -9,6 +9,7 @@ event loop. Every SQL statement uses `?` placeholders bound through the
 
 from __future__ import annotations
 
+import math
 import sqlite3
 import uuid
 from datetime import UTC, datetime
@@ -209,8 +210,8 @@ def execute_trade(price_cache, ticker: str, side: str, quantity: float) -> dict:
     an over-sell (each leaving cash/positions/trades byte-identical to
     before the call, since the whole block runs inside one transaction).
     """
-    if quantity <= 0:
-        raise ValueError("Quantity must be greater than zero.")
+    if not math.isfinite(quantity) or quantity <= 0:
+        raise ValueError("Quantity must be a positive, finite number.")
 
     conn = get_connection()
     try:

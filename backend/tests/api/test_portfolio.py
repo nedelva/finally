@@ -1,5 +1,7 @@
 """Tests for `GET /api/portfolio` and `POST /api/portfolio/trade`."""
 
+import pytest
+
 EXPECTED_POSITION_KEYS = {
     "ticker",
     "quantity",
@@ -88,6 +90,27 @@ class TestBuyTrade:
 
         assert response.status_code == 400
         assert response.json()["success"] is False
+        follow_up = client.get("/api/portfolio").json()
+        assert follow_up["cash_balance"] == 10000.0
+
+    @pytest.mark.parametrize("literal", ["NaN", "Infinity", "-Infinity"])
+    def test_buy_non_finite_quantity_returns_400_not_an_unhandled_500(self, client, literal):
+        # CR-01: a NaN/Infinity quantity bypasses every `<=`/`>` numeric
+        # guard (they all evaluate False), previously reaching an unhandled
+        # sqlite3.IntegrityError. Uses a raw JSON body — Python's json.loads
+        # (via Starlette) and Pydantic v2 both accept these literal tokens by
+        # default, so this is a realistic request, not a contrived one.
+        client.app.state.price_cache.update(ticker="AAPL", price=190.5)
+        body = ('{"ticker":"AAPL","side":"buy","quantity":%s}' % literal).encode()
+
+        response = client.post(
+            "/api/portfolio/trade", content=body, headers={"Content-Type": "application/json"}
+        )
+
+        assert response.status_code == 400
+        body_json = response.json()
+        assert body_json["success"] is False
+        assert "error" in body_json
         follow_up = client.get("/api/portfolio").json()
         assert follow_up["cash_balance"] == 10000.0
 
