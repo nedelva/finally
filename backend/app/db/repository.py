@@ -216,6 +216,13 @@ def execute_trade(price_cache, ticker: str, side: str, quantity: float) -> dict:
     conn = get_connection()
     try:
         with conn:
+            # BEGIN IMMEDIATE acquires the write lock before the first SELECT,
+            # instead of relying on sqlite3's default deferred-transaction
+            # behavior (which only opens a transaction before the first
+            # write). Without this, two concurrent trade requests can both
+            # read the same stale cash/position balance before either has
+            # written, producing a lost-update race (WR-01).
+            conn.execute("BEGIN IMMEDIATE")
             watchlisted = conn.execute(
                 "SELECT 1 FROM watchlist WHERE user_id = ? AND ticker = ?",
                 (DEFAULT_USER_ID, ticker),

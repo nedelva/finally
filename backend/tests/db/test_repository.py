@@ -215,6 +215,56 @@ class TestExecuteTrade:
         assert get_cash_balance() == cash_before
         assert get_positions() == []
 
+    def test_concurrent_buys_do_not_lose_an_update(self, initialized_db, monkeypatch):
+        # WR-01: force two `execute_trade` calls to open their connections
+        # before either proceeds past its first read, deterministically
+        # reproducing the interleaving a stray double-click/two-tab race
+        # could produce. Before the `BEGIN IMMEDIATE` fix, both threads read
+        # the same starting cash balance and the second write clobbers the
+        # first's result (a "lost update"): final cash ends up 5000.0
+        # instead of the correct 0.0. `BEGIN IMMEDIATE` makes the second
+        # connection's transaction block until the first commits, so its
+        # SELECT observes the first trade's already-updated balance.
+        import threading
+
+        import app.db.repository as repo
+
+        cache = _seeded_cache({"AAPL": 1000.0})
+        barrier = threading.Barrier(2)
+        call_count = {"n": 0}
+        count_lock = threading.Lock()
+        orig_get_connection = repo.get_connection
+
+        def synchronized_get_connection():
+            conn = orig_get_connection()
+            with count_lock:
+                call_count["n"] += 1
+                n = call_count["n"]
+            if n <= 2:
+                barrier.wait(timeout=5)
+            return conn
+
+        monkeypatch.setattr(repo, "get_connection", synchronized_get_connection)
+
+        results = []
+
+        def do_trade():
+            try:
+                execute_trade(cache, "AAPL", "buy", 5)
+                results.append("ok")
+            except Exception as exc:  # pragma: no cover - failure path only
+                results.append(f"err:{exc}")
+
+        t1 = threading.Thread(target=do_trade)
+        t2 = threading.Thread(target=do_trade)
+        t1.start()
+        t2.start()
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+
+        assert results == ["ok", "ok"]
+        assert get_cash_balance() == 0.0
+
     def test_ticker_not_on_watchlist_raises_even_with_a_cache_price(self, initialized_db):
         cache = PriceCache()
         cache.update(ticker="ZZZZ", price=50.0)
