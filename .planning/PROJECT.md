@@ -23,17 +23,20 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 - ✓ SQLite DB with lazy initialization: `users_profile`, `watchlist`, `positions`, `trades`, `portfolio_snapshots`, `chat_messages` tables, seeded with $10k cash and the 10 default tickers, per PLAN.md §7 — Phase 2
 - ✓ Watchlist REST API: `GET/POST /api/watchlist`, `DELETE /api/watchlist/{ticker}`, per PLAN.md §8 — Phase 2
 - ✓ Watchlist UI: add/remove tickers, loading/error states, scroll-bounded panel decoupled from chart height, accessible remove-button hit target — Phase 2
+- ✓ Portfolio REST API: `GET /api/portfolio`, `POST /api/portfolio/trade`, `GET /api/portfolio/history`, per PLAN.md §8 — Phase 3
+- ✓ Trading engine: atomic SQLite buy/sell fills, `BEGIN IMMEDIATE` write-lock, `math.isfinite()` quantity guard, post-trade + 30s periodic `portfolio_snapshots` — Phase 3
+- ✓ Frontend portfolio UI: trade bar, live header cash/total-value, positions table, P&L-colored heatmap with click-to-select, P&L chart with pre-first-tick bootstrap point — per PLAN.md §10 — Phase 3
 
 (See `.planning/codebase/ARCHITECTURE.md` and `STACK.md` for full detail on what's built. `planning/MARKET_DATA_SUMMARY.md` is the original component summary.)
 
 ### Active
 
-- [ ] Portfolio REST API: `GET /api/portfolio`, `POST /api/portfolio/trade`, `GET /api/portfolio/history`, per PLAN.md §8
 - [ ] LLM chat integration: `POST /api/chat` via LiteLLM → OpenRouter (Cerebras inference, `openrouter/openai/gpt-oss-120b`), structured-output trade/watchlist auto-execution, `LLM_MOCK` mode for tests, per PLAN.md §9
-- [ ] Frontend UI (Next.js static export, Tailwind dark theme): main chart, portfolio heatmap, P&L chart, positions table, trade bar, AI chat panel — per PLAN.md §10
+- [ ] AI chat panel UI (Next.js static export, Tailwind dark theme) — per PLAN.md §10
 - [ ] Docker packaging: multi-stage Dockerfile, start/stop scripts (mac + Windows), volume-mounted SQLite — per PLAN.md §11
 - [ ] E2E test suite (Playwright, `LLM_MOCK=true`) per PLAN.md §12
 - [ ] Version-counter-skipped-on-empty-cache bug, daily-vs-tick-to-tick % change spec mismatch — see `.planning/codebase/CONCERNS.md` (router singleton fixed in Phase 1)
+- [ ] Mobile tap-target confirmation for trade bar controls and stale local-validation copy outside the Copywriting Contract — see 03-UI-REVIEW.md fixes #2/#3 (advisory, non-blocking)
 
 ### Out of Scope
 
@@ -69,6 +72,9 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 | Known market-data backend gaps (router singleton, version-counter bug, % change spec mismatch) folded into the upcoming API-layer phase rather than a dedicated cleanup phase | User's explicit choice during init questioning — fix while wiring, don't block on a separate pass | — Pending |
 | No scope changes from PLAN.md; build in dependency order (DB → API/portfolio → frontend → LLM chat → Docker) | User confirmed no priority changes during init questioning | — Pending |
 | Watchlist remove-button hit target sized to ~24x24px with a permanent (not hover-only) background affordance, and the watchlist panel bounded with internal scroll decoupled from main-chart height | UAT surfaced both as real usability gaps (sub-24px WCAG-violating hit box; unbounded panel driving page scroll and stretching the chart) — fixed in gap-closure plan 02-05, reconfirmed live | ✓ Good |
+| `workflow.use_worktrees` set to `false` for the project (Phase 3 execution) | Claude Code's worktree isolation forks from `origin/HEAD`, which kept lagging behind local `HEAD` mid-phase with no push in the loop; every wave's worktree would have missed the phase's own plan files | ✓ Good — re-enabled after the branch was merged into `main` and local caught back up |
+| Trade quantity validated with `math.isfinite()`, not just `> 0`; `execute_trade`'s transaction opens with `BEGIN IMMEDIATE` | Phase 3 code review found a `NaN` quantity crashed the trade endpoint with an unhandled 500 (comparisons against `NaN` are always `False`), and a read-then-write race window across concurrent trades | ✓ Good — both independently reproduced pre-fix and re-verified post-fix |
+| The `03-VALIDATION.md` and `03-SECURITY.md` drafts (authored at plan time, before code existed) were corrected in place rather than treated as fresh audits | One planned test name (`test_get_portfolio_fresh_db`) never matched the executor's actual name; the underlying coverage existed, only the draft's guess was stale | ✓ Good — 12/12 mapped commands re-verified green, `threats_open: 0` |
 
 ## Evolution
 
@@ -88,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-19 after Phase 2*
+*Last updated: 2026-09-20 after Phase 3*
