@@ -48,7 +48,7 @@
     "security_enforcement": true,
     "security_asvs_level": 1,
     "security_block_on": "high",
-    "use_worktrees": false,
+    "use_worktrees": true,
     "ui_review": true,
     "tdd_mode": false,
     "_auto_chain_active": false,

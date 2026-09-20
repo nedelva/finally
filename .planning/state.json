@@ -16,7 +16,7 @@
     {
       "number": "3",
       "name": "Trading & Portfolio",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "4",
@@ -31,8 +31,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step (verify)",
-    "reason": "Phase 03 of 5 · 40% · ready to verify"
+    "label": "Advance to the next step (plan phase 4)",
+    "reason": "Phase 4 of 5 — needs a plan"
   },
-  "updated_at": "2026-09-20T16:27:09.396Z"
+  "updated_at": "2026-09-20T18:57:19.833Z"
 }
