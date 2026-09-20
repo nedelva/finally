@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { MainChart } from "@/components/MainChart";
+import { TradeBar } from "@/components/TradeBar";
 import { Watchlist } from "@/components/Watchlist";
-import { useWatchlist } from "@/lib/hooks";
+import { usePortfolio, useWatchlist } from "@/lib/hooks";
 import { PriceStreamProvider, usePriceStreamContext } from "@/lib/PriceStreamContext";
 
 function Terminal() {
   const { status, ticks, history, tickers } = usePriceStreamContext();
   const { watchlist } = useWatchlist();
+  const { refetch: refetchPortfolio } = usePortfolio();
   const [selectedTicker, setSelectedTicker] = useState<string | undefined>(undefined);
 
   // Keeps the chart selection valid across two independent, differently
@@ -55,6 +57,8 @@ function Terminal() {
           />
         </div>
       </div>
+
+      <TradeBar watchlist={watchlist} onFilled={refetchPortfolio} />
     </main>
   );
 }

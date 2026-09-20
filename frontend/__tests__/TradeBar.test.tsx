@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TradeBar } from "@/components/TradeBar";
@@ -100,20 +100,12 @@ describe("TradeBar", () => {
     expect(screen.getByTestId("trade-bar-buy")).toHaveTextContent("Buying...");
     expect(screen.getByTestId("trade-bar-sell")).toBeDisabled();
 
+    // Resolve with a rejected trade (quantity is NOT cleared on failure, per
+    // D-08) so this test isolates the in-flight->resolved transition without
+    // conflating it with the separate clear-on-success behavior below.
     resolvePromise({
       ok: true,
-      data: {
-        success: true,
-        trade: {
-          id: "t1",
-          ticker: "AAPL",
-          side: "buy",
-          quantity: 1.5,
-          price: 190.32,
-          executed_at: "2026-09-20T00:00:00.000Z",
-        },
-        portfolio: { cash_balance: 0, positions: [], total_value: 0, total_unrealized_pnl: 0 },
-      },
+      data: { success: false, error: "Insufficient cash for this trade. Lower the quantity and try again." },
     });
     await waitFor(() => expect(screen.getByTestId("trade-bar-buy")).not.toBeDisabled());
   });
@@ -128,7 +120,9 @@ describe("TradeBar", () => {
     });
 
     it("clears quantity and shows a fading confirmation on success, using the server-returned price", async () => {
-      const user = userEvent.setup({ delay: null });
+      // fireEvent (not userEvent) here — userEvent's internal per-keystroke
+      // timers conflict with vi.useFakeTimers(), which this test needs for
+      // the fade-timeout assertion below.
       vi.mocked(postTrade).mockResolvedValue({
         ok: true,
         data: {
@@ -148,18 +142,18 @@ describe("TradeBar", () => {
       render(<TradeBar watchlist={[makeEntry("AAPL")]} onFilled={onFilled} />);
 
       const quantityInput = screen.getByTestId("trade-bar-quantity") as HTMLInputElement;
-      await user.type(quantityInput, "1.5");
-      await user.click(screen.getByTestId("trade-bar-buy"));
+      fireEvent.change(quantityInput, { target: { value: "1.5" } });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("trade-bar-buy"));
+      });
 
-      await waitFor(() =>
-        expect(screen.getByTestId("trade-bar-confirmation")).toHaveTextContent(
-          "Bought 1.5 AAPL @ $190.32",
-        ),
+      expect(screen.getByTestId("trade-bar-confirmation")).toHaveTextContent(
+        "Bought 1.5 AAPL @ $190.32",
       );
       expect(quantityInput.value).toBe("");
       expect(onFilled).toHaveBeenCalledTimes(1);
 
-      await act(async () => {
+      act(() => {
         vi.advanceTimersByTime(2600);
       });
 

@@ -13,8 +13,19 @@ import type { PriceTick, WatchlistEntry } from "@/lib/types";
 // match) — the idiomatic Vitest way to substitute useWatchlist()'s REST
 // response so row membership can be asserted independently of the SSE
 // stream's ever-growing ticker set.
+//
+// usePortfolio is also mocked here (03-01) — page.tsx now calls it to feed
+// TradeBar's onFilled prop, and every test in this file renders <Page />
+// through the same mocked module, so it needs a stable, non-crashing
+// default: none of these tests assert against portfolio state itself.
 vi.mock("@/lib/hooks", () => ({
   useWatchlist: vi.fn(),
+  usePortfolio: vi.fn(() => ({
+    portfolio: null,
+    loading: false,
+    error: null,
+    refetch: vi.fn(async () => {}),
+  })),
 }));
 
 // Second, independent mock (of lib/api rather than lib/hooks) — the
