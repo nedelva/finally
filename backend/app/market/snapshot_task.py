@@ -25,10 +25,20 @@ async def snapshot_loop(
 ) -> None:
     """Record a `portfolio_snapshots` row every `interval` seconds, forever.
 
-    RED stub — raises `NotImplementedError` until Task 2's GREEN step.
-    `record_snapshot` is imported (not yet called) so tests can already
-    monkeypatch it on this module.
+    Mirrors `SimulatorDataSource._run_loop`'s shape: sleep, do work, catch
+    and log a failure without exiting. Sleeping before the first write is
+    deliberate — the post-trade writer (`execute_trade`) and the frontend's
+    D-13 client-side bootstrap point already cover the first interval, so an
+    immediate write at startup would add a duplicate. `asyncio.CancelledError`
+    is re-raised immediately so `task.cancel()` still propagates to the
+    awaiting caller (`main.py`'s lifespan); a broad `Exception` is logged and
+    swallowed so one bad write can never silently end the history series.
     """
     while True:
         await asyncio.sleep(interval)
-        raise NotImplementedError(record_snapshot)
+        try:
+            await asyncio.to_thread(record_snapshot, price_cache)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Snapshot write failed; will retry next interval")
