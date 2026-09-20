@@ -146,6 +146,22 @@ def total_portfolio_value(conn: sqlite3.Connection, price_cache) -> float:
     return round(total, 2)
 
 
+def record_snapshot(price_cache) -> dict:
+    """Write one `portfolio_snapshots` row valued through `total_portfolio_value`.
+
+    RED stub — raises `NotImplementedError` until Task 1's GREEN step.
+    """
+    raise NotImplementedError
+
+
+def get_snapshots() -> list[dict]:
+    """Return the current user's snapshots ascending by `recorded_at`.
+
+    RED stub — raises `NotImplementedError` until Task 1's GREEN step.
+    """
+    raise NotImplementedError
+
+
 def execute_trade(price_cache, ticker: str, side: str, quantity: float) -> dict:
     """Execute a market-order trade against the live price cache.
 

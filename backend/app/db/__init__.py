@@ -9,6 +9,8 @@ Public API:
     get_positions           - Read the current user's positions, ordered by ticker
     execute_trade           - Execute a market-order trade atomically, raising ValueError on rejection
     total_portfolio_value   - Value cash + positions on an already-open connection (D-03-aware)
+    record_snapshot         - Write one portfolio_snapshots row valued through total_portfolio_value
+    get_snapshots           - Read the current user's snapshots ascending by recorded_at
 """
 
 from .init import init_db
@@ -17,7 +19,9 @@ from .repository import (
     execute_trade,
     get_cash_balance,
     get_positions,
+    get_snapshots,
     get_watchlist,
+    record_snapshot,
     remove_watchlist_ticker,
     total_portfolio_value,
 )
@@ -31,4 +35,6 @@ __all__ = [
     "get_positions",
     "execute_trade",
     "total_portfolio_value",
+    "record_snapshot",
+    "get_snapshots",
 ]

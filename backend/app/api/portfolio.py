@@ -15,7 +15,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.db import execute_trade, get_cash_balance, get_positions
+from app.db import execute_trade, get_cash_balance, get_positions, get_snapshots
 from app.market import PriceCache, normalize_ticker
 
 logger = logging.getLogger(__name__)
@@ -114,5 +114,14 @@ def create_portfolio_router(price_cache: PriceCache) -> APIRouter:
             status_code=200,
             content={"success": True, "trade": trade, "portfolio": portfolio},
         )
+
+    @router.get("/portfolio/history")
+    async def get_portfolio_history_route() -> dict:
+        """Return every recorded portfolio value snapshot, ascending by time.
+
+        Matches `PortfolioHistoryResponse` in `frontend/lib/types.ts` exactly
+        — a single `snapshots` key, no pagination or windowing (D-12).
+        """
+        return await asyncio.to_thread(lambda: {"snapshots": get_snapshots()})
 
     return router

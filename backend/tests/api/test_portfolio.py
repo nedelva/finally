@@ -135,3 +135,37 @@ class TestSellTrade:
 
         assert response.status_code == 200
         assert response.json()["portfolio"]["positions"] == []
+
+
+class TestPortfolioHistory:
+    """`GET /api/portfolio/history` against a freshly-seeded database."""
+
+    def test_fresh_database_returns_200_and_empty_snapshots(self, client):
+        response = client.get("/api/portfolio/history")
+
+        assert response.status_code == 200
+        assert response.json() == {"snapshots": []}
+
+    def test_after_a_trade_newest_snapshot_matches_the_trades_own_total_value(self, client):
+        client.app.state.price_cache.update(ticker="AAPL", price=190.5)
+
+        trade_response = client.post(
+            "/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 2}
+        )
+        trade_total_value = trade_response.json()["portfolio"]["total_value"]
+
+        history_response = client.get("/api/portfolio/history")
+
+        assert history_response.status_code == 200
+        snapshots = history_response.json()["snapshots"]
+        assert len(snapshots) >= 1
+        assert snapshots[-1]["total_value"] == trade_total_value
+
+    def test_every_entry_has_exactly_two_keys(self, client):
+        client.app.state.price_cache.update(ticker="AAPL", price=190.5)
+        client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 1})
+
+        response = client.get("/api/portfolio/history")
+
+        for entry in response.json()["snapshots"]:
+            assert set(entry.keys()) == {"total_value", "recorded_at"}

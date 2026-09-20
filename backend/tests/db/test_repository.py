@@ -8,7 +8,9 @@ from app.db import (
     execute_trade,
     get_cash_balance,
     get_positions,
+    get_snapshots,
     get_watchlist,
+    record_snapshot,
     remove_watchlist_ticker,
     total_portfolio_value,
 )
@@ -242,3 +244,75 @@ class TestExecuteTrade:
         finally:
             conn.close()
         assert latest["total_value"] == expected
+
+
+class TestRecordSnapshot:
+    """Synchronous repository-level tests against a freshly-seeded database."""
+
+    def test_record_snapshot_on_fresh_db_writes_seeded_cash_balance(self, initialized_db):
+        cache = PriceCache()
+
+        result = record_snapshot(cache)
+
+        assert result["total_value"] == 10000.0
+
+    def test_record_snapshot_matches_build_portfolio_after_a_buy(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        conn = get_connection()
+        try:
+            expected = total_portfolio_value(conn, cache)
+        finally:
+            conn.close()
+
+        result = record_snapshot(cache)
+
+        assert result["total_value"] == expected
+
+    def test_record_snapshot_matches_when_held_ticker_has_no_cache_entry(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        cache.remove("AAPL")
+        conn = get_connection()
+        try:
+            expected = total_portfolio_value(conn, cache)
+        finally:
+            conn.close()
+
+        result = record_snapshot(cache)
+
+        assert result["total_value"] == expected
+
+    def test_calling_record_snapshot_twice_produces_two_rows_not_an_upsert(self, initialized_db):
+        cache = PriceCache()
+
+        record_snapshot(cache)
+        record_snapshot(cache)
+
+        conn = get_connection()
+        try:
+            count = conn.execute("SELECT COUNT(*) FROM portfolio_snapshots").fetchone()[0]
+        finally:
+            conn.close()
+        assert count == 2
+
+
+class TestGetSnapshots:
+    """Synchronous repository-level tests against a freshly-seeded database."""
+
+    def test_get_snapshots_returns_rows_ascending_by_recorded_at_with_exact_keys(
+        self, initialized_db
+    ):
+        cache = PriceCache()
+        record_snapshot(cache)
+        record_snapshot(cache)
+
+        rows = get_snapshots()
+
+        assert len(rows) == 2
+        assert rows[0]["recorded_at"] <= rows[1]["recorded_at"]
+        for row in rows:
+            assert set(row.keys()) == {"total_value", "recorded_at"}
+
+    def test_get_snapshots_on_fresh_db_returns_empty_list(self, initialized_db):
+        assert get_snapshots() == []
