@@ -48,10 +48,12 @@
     "security_enforcement": true,
     "security_asvs_level": 1,
     "security_block_on": "high",
-    "use_worktrees": true,
+    "use_worktrees": false,
     "ui_review": true,
     "tdd_mode": false,
-    "_auto_chain_active": false
+    "_auto_chain_active": false,
+    "build_command": "cd frontend && npm run build",
+    "test_command": "(cd backend && uv run pytest -q) && (cd frontend && npm test)"
   },
   "ship": {
     "pr_body_sections": []
