@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Trading & Portfolio
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-20T12:32:52.968Z"
-last_activity: 2026-09-19
-last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: fac44d1f327d47f9541996ea7bcc2c6db3160a9e
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-09-20T12:58:21.219Z"
+last_activity: 2026-09-20
+last_activity_desc: Phase 03 execution started
+state_head: 64874eb69e90650020584065effc087f096167ef
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 10
+  completed_plans: 11
   percent: 40
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-17)
 
 **Core value:** The user can watch live prices stream, place simulated trades, and have an AI assistant that can see the portfolio and act on it in natural language — all in one dependency-free `docker run`.
-**Current focus:** Phase 3 — Trading & Portfolio
+**Current focus:** Phase 03 — Trading & Portfolio
 
 ## Current Position
 
-Phase: 03 (Trading & Portfolio) — READY TO EXECUTE
-Plan: Not started
+Phase: 03 (Trading & Portfolio) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-09-19 — Phase 02 complete, transitioned to Phase 3
+Last activity: 2026-09-20 — Phase 03 execution started
 
 Progress: [████░░░░░░] 40%
 
@@ -68,6 +68,7 @@ Progress: [████░░░░░░] 40%
 | Phase 02 P02 | 13min | 3 tasks | 11 files |
 | Phase 02 P03 | 20min | 2 tasks | 9 files |
 | Phase 02 P05 | 15min | 2 tasks | 5 files |
+| Phase 03 P01 | 23min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02]: Wrapped only the loading/loadError/empty/table branch in watchlist-scroll-container, not the whole panel div - keeps the add-ticker form always visible above the scrollable region, deliberate deviation from the debug session's literal Watchlist.tsx:92 fix location
 - [Phase 02]: [Phase 02]: Left the remove <td>'s py-1.5 padding untouched when giving the remove button a 24x24px hit box - the sparkline <td> (36px) was already the row's tallest cell and remains tied, not exceeded
 - [Phase 02]: [Phase 02]: Did not modify MainChart.tsx to fix the chart/watchlist height coupling - lg:items-start on page.tsx's row container alone removes the stretch constraint MainChart's h-full needed to couple against
+- [Phase 03]: [Phase 03]: avg_cost recomputed only on buy (weighted average); untouched on sell — recomputing on sell would corrupt every later unrealized-P&L figure
+- [Phase 03]: [Phase 03]: D-01 watchlist membership enforced via a SELECT on the trade's own transaction connection, not via get_watchlist() or a PriceCache hit
+- [Phase 03]: [Phase 03]: 1e-9 epsilon governs both the over-sell rejection and the close-out delete so float dust can never strand a position
 
 ### Pending Todos
 
@@ -125,6 +129,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-20T11:25:42.171Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: /Users/valeriu/AICourses/finally/.planning/phases/03-trading-portfolio/03-UI-SPEC.md
+Last session: 2026-09-20T12:58:21.192Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

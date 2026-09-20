@@ -18,8 +18,8 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 ### Portfolio
 
 - [ ] **PORT-01**: User starts with $10,000 in virtual cash, shown in the header and updating live as portfolio value changes
-- [ ] **PORT-02**: User can buy shares of a watched ticker at the current market price with an instant fill (no fees, no confirmation dialog)
-- [ ] **PORT-03**: User can sell shares they own at the current market price with an instant fill (no fees, no confirmation dialog)
+- [x] **PORT-02**: User can buy shares of a watched ticker at the current market price with an instant fill (no fees, no confirmation dialog)
+- [x] **PORT-03**: User can sell shares they own at the current market price with an instant fill (no fees, no confirmation dialog)
 - [ ] **PORT-04**: User sees a positions table with ticker, quantity, avg cost, current price, unrealized P&L, and % change per holding
 - [ ] **PORT-05**: User sees a portfolio heatmap (treemap) with positions sized by weight and colored by P&L (green=profit, red=loss)
 - [ ] **PORT-06**: User sees a P&L chart tracking total portfolio value over time, sourced from periodic portfolio snapshots
@@ -75,8 +75,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MKT-04 | Phase 1 | Complete |
 | MKT-05 | Phase 1 | Complete |
 | PORT-01 | Phase 3 | Pending |
-| PORT-02 | Phase 3 | Pending |
-| PORT-03 | Phase 3 | Pending |
+| PORT-02 | Phase 3 | Complete |
+| PORT-03 | Phase 3 | Complete |
 | PORT-04 | Phase 3 | Pending |
 | PORT-05 | Phase 3 | Pending |
 | PORT-06 | Phase 3 | Pending |
