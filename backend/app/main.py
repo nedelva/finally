@@ -19,7 +19,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import create_watchlist_router
+from app.api import create_portfolio_router, create_watchlist_router
 from app.db import get_watchlist, init_db
 from app.market import (
     DEFAULT_TICKERS,
@@ -112,6 +112,7 @@ def create_app(
     # must be registered before the static mount, or it would swallow them.
     app.include_router(create_stream_router(price_cache))
     app.include_router(create_watchlist_router(price_cache))
+    app.include_router(create_portfolio_router(price_cache))
 
     @app.get("/api/health")
     async def health() -> dict[str, str]:
