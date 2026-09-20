@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Trading & Portfolio
-status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-09-20T16:12:25.724Z"
+status: verifying
+stopped_at: Completed 03-04-PLAN.md — Phase 03 complete, ready for verification
+last_updated: "2026-09-20T16:27:28.002Z"
 last_activity: 2026-09-20
 last_activity_desc: Phase 03 execution started
-state_head: f5e61e97d99cd0b8670a4184ed4630e39ffb4bbf
+state_head: 6a780db35698083cca54efb041f23aad54d18a2e
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 40
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-17)
 
 Phase: 03 (Trading & Portfolio) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-20 — Phase 03 execution started
 
 Progress: [████░░░░░░] 40%
@@ -71,6 +71,7 @@ Progress: [████░░░░░░] 40%
 | Phase 03 P01 | 23min | 2 tasks | 11 files |
 | Phase 03 P02 | 18min | 2 tasks | 7 files |
 | Phase 03 P03 | 15min | 2 tasks | 5 files |
+| Phase 03 P04 | 55min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 03]: 1e-9 epsilon governs both the over-sell rejection and the close-out delete so float dust can never strand a position
 - [Phase 03]: useLiveTotalValue routes every position through deriveLivePosition rather than recomputing inline, guaranteeing the header total and positions table always agree — Shared math is the only way both consumers stay in sync with the D-03 no-live-tick fallback
 - [Phase 03]: Header cash/total-value figures are neutral gray-100/tabular-nums with no color or flash animation — Per-position P&L coloring already lives in the positions table/heatmap; a second color signal for the same number would compete with it
+- [Phase 03]: [Phase 03]: record_snapshot routes through the shared total_portfolio_value helper so the periodic writer, post-trade writer, and build_portfolio can never disagree on a valuation
+- [Phase 03]: [Phase 03]: snapshot_loop sleeps before its first write — the post-trade writer and the frontend's D-13 bootstrap point already cover the first interval, avoiding a duplicate write at startup
+- [Phase 03]: [Phase 03]: PnLChart's dot renders at r={2} (not MainChart's dot={false}) purely for jsdom testability, asserting an exact plotted-point count via .recharts-dot
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-20T13:10:22.712Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-09-20T16:27:27.977Z
+Stopped at: Completed 03-04-PLAN.md — Phase 03 complete, ready for verification
 Resume file: None

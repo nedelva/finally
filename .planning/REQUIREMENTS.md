@@ -22,7 +22,7 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 - [x] **PORT-03**: User can sell shares they own at the current market price with an instant fill (no fees, no confirmation dialog)
 - [x] **PORT-04**: User sees a positions table with ticker, quantity, avg cost, current price, unrealized P&L, and % change per holding
 - [x] **PORT-05**: User sees a portfolio heatmap (treemap) with positions sized by weight and colored by P&L (green=profit, red=loss)
-- [ ] **PORT-06**: User sees a P&L chart tracking total portfolio value over time, sourced from periodic portfolio snapshots
+- [x] **PORT-06**: User sees a P&L chart tracking total portfolio value over time, sourced from periodic portfolio snapshots
 
 ### Watchlist
 
@@ -79,7 +79,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORT-03 | Phase 3 | Complete |
 | PORT-04 | Phase 3 | Complete |
 | PORT-05 | Phase 3 | Complete |
-| PORT-06 | Phase 3 | Pending |
+| PORT-06 | Phase 3 | Complete |
 | WTCH-01 | Phase 2 | Complete |
 | WTCH-02 | Phase 2 | Complete |
 | CHAT-01 | Phase 4 | Pending |
