@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Trading & Portfolio
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-09-20T12:58:21.219Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-09-20T13:10:22.737Z"
 last_activity: 2026-09-20
 last_activity_desc: Phase 03 execution started
-state_head: 64874eb69e90650020584065effc087f096167ef
+state_head: 95428a07b44770078272fab03e070bad369fbcca
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 40
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-17)
 ## Current Position
 
 Phase: 03 (Trading & Portfolio) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-20 — Phase 03 execution started
 
@@ -69,6 +69,7 @@ Progress: [████░░░░░░] 40%
 | Phase 02 P03 | 20min | 2 tasks | 9 files |
 | Phase 02 P05 | 15min | 2 tasks | 5 files |
 | Phase 03 P01 | 23min | 2 tasks | 11 files |
+| Phase 03 P02 | 18min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 03]: avg_cost recomputed only on buy (weighted average); untouched on sell — recomputing on sell would corrupt every later unrealized-P&L figure
 - [Phase 03]: [Phase 03]: D-01 watchlist membership enforced via a SELECT on the trade's own transaction connection, not via get_watchlist() or a PriceCache hit
 - [Phase 03]: [Phase 03]: 1e-9 epsilon governs both the over-sell rejection and the close-out delete so float dust can never strand a position
+- [Phase 03]: useLiveTotalValue routes every position through deriveLivePosition rather than recomputing inline, guaranteeing the header total and positions table always agree — Shared math is the only way both consumers stay in sync with the D-03 no-live-tick fallback
+- [Phase 03]: Header cash/total-value figures are neutral gray-100/tabular-nums with no color or flash animation — Per-position P&L coloring already lives in the positions table/heatmap; a second color signal for the same number would compete with it
 
 ### Pending Todos
 
@@ -129,6 +132,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-20T12:58:21.192Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-09-20T13:10:22.712Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
