@@ -36,7 +36,7 @@ interface ChartPoint {
 }
 
 const PANEL_HEIGHT = 320;
-const HEADING = <h2 className="text-sm font-medium text-gray-400">P&amp;L</h2>;
+const HEADING = <h2 className="text-base font-semibold text-gray-200">P&amp;L</h2>;
 
 function PanelChrome({ children }: { children: ReactNode }) {
   return (
