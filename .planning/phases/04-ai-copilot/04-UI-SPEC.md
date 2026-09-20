@@ -43,6 +43,8 @@ created: "2026-09-21"
 3. **Left column** (`flex-1 min-w-0` at `lg:`, full width below `lg:`): the entire pre-existing panel stack, unchanged internally — `Watchlist`+`MainChart` row, `TradeBar`, `PositionsTable`+`Heatmap` row, `PnLChart`, in that order, each keeping its current internal layout.
 4. **Right column** (`ChatPanel`, `w-full lg:w-96 lg:shrink-0`): docked at `lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)]` so it stays in view while the left column scrolls past it on tall viewports. Below `lg:`, it drops to a normal full-width block at the bottom of the vertical stack (same responsive collapse already used by the two existing two-column rows) — no sticky behavior on small screens.
 
+**Visual focal point:** the message list is the primary visual anchor of `ChatPanel` — newest messages (including the seed greeting on first load) auto-scroll into view on send and on response arrival. The input row is secondary; the header row (title + collapse toggle) is tertiary chrome.
+
 **Collapse mechanism — Design decision (no CONTEXT.md to draw from):** collapse toggles panel *height*, not width, and needs no separate "slim rail" concept:
 - **Expanded** (default on every fresh page load — no persistence, see below): renders the full panel — header row, scrollable message list, message input row.
 - **Collapsed**: renders only the header row (title + toggle button); the message list and input are not rendered. Panel height shrinks to the header's own height (~48px).
@@ -108,6 +110,8 @@ Unchanged from `03-UI-SPEC.md` — no new size/weight introduced. Usage map for 
 
 Accent reserved for: yellow → wordmark only (no change); blue → chart line stroke, input focus rings (trade bar + **new:** chat input), selected-state background tint, user message bubble tint/border; purple → "Add Ticker" button (Phase 2/3) and **new:** chat Send button — both are the project's only two form-submit buttons, keeping "purple = submit" a single consistent rule rather than one-off.
 
+Accent colors (blue, primary purple, green, red) together comprise the remaining ~10% of the UI, distributed across the reserved-for uses listed above plus the executed/failed action pills — unchanged from the 60/30/10 ratio established in `03-UI-SPEC.md`.
+
 **Design decision (no CONTEXT.md to draw from):** executed vs. failed action pills use the same green/red pair for *both* trade and watchlist actions (not a third color for watchlist changes) — "green = succeeded, red = failed" is a single universal semantic already established by the buy/sell button colors, and introducing a third color for watchlist-specific confirmations would compete with, rather than reinforce, that existing rule.
 
 ---
@@ -134,7 +138,7 @@ Accent reserved for: yellow → wordmark only (no change); blue → chart line s
 
 ## UI Considerations
 
-Applicable state considerations resolved: 8 covered, 5 backstop, 0 unresolved.
+Applicable state considerations resolved: 8 covered, 6 backstop, 0 unresolved. (Verified against `ui-consideration-probe.cjs`'s full 36-candidate classification across the panel's 6 elements — empty/collapse/toggle-shaped candidates with no data-fetch, form, or list semantics were dismissed as not applicable; one additional gap below was added from that pass.)
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
@@ -151,6 +155,7 @@ Applicable state considerations resolved: 8 covered, 5 backstop, 0 unresolved.
 | overflow | Long assistant/user message text (static-content) | 🧪 backstop | `whitespace-pre-wrap break-words` on bubble text; no markdown rendering — LLM prose displays as plain wrapped text, preserving line breaks only |
 | zero-one-many | Inline action pills per message | ✅ covered | Zero actions → no pill row renders under that message; one or many → a vertical stack of pills, one per action, in the order the response listed them |
 | long-text | Message input field | 🧪 backstop | Single-line `<input>`; very long input scrolls horizontally within the field per native browser behavior — no custom multi-line textarea for this phase's scope |
+| long-text | Inline action pill text (failed-action `{error}` string) | 🧪 backstop | The server's own validation message is displayed verbatim inside a pill with no established max length; pill text wraps rather than truncates, consistent with the message-bubble wrapping convention (see overflow row above) rather than clipping with an ellipsis |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
