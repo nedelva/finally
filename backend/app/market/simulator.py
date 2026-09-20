@@ -21,6 +21,7 @@ from .seed_prices import (
     TICKER_PARAMS,
     TSLA_CORR,
 )
+from .ticker import normalize_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,16 @@ class GBMSimulator:
         return result
 
     def add_ticker(self, ticker: str) -> None:
-        """Add a ticker to the simulation. Rebuilds the correlation matrix."""
+        """Add a ticker to the simulation. Rebuilds the correlation matrix.
+
+        `_rebuild_cholesky()` guards its own `np.linalg.cholesky()` call
+        against a non-positive-definite correlation matrix, falling back to
+        uncorrelated draws (`_cholesky = None`) rather than raising — so a
+        rebuild failure can never leave `_cholesky` stale/wrongly-shaped
+        relative to the just-appended `_tickers` entry (see WR-03: a stale
+        Cholesky matrix shape-mismatches against `step()`'s per-tick draws
+        and silently halts price updates for every ticker).
+        """
         if ticker in self._prices:
             return
         self._add_ticker_internal(ticker)
@@ -155,6 +165,17 @@ class GBMSimulator:
         """Rebuild the Cholesky decomposition of the ticker correlation matrix.
 
         Called whenever tickers are added or removed. O(n^2) but n < 50.
+
+        `np.linalg.cholesky()` can raise `LinAlgError` if the constructed
+        correlation matrix isn't positive-definite. Guarded here (rather than
+        left to propagate) because by the time this runs, `_tickers` has
+        already been mutated by the caller (`add_ticker`/`remove_ticker`) —
+        an unguarded raise would leave `self._cholesky` stale and
+        wrong-shaped relative to `self._tickers`, and `step()`'s next
+        `self._cholesky @ z_independent` would then shape-mismatch and raise
+        every tick going forward, silently halting all price updates. Falling
+        back to uncorrelated draws (`None`) keeps the simulator degraded but
+        alive instead.
         """
         n = len(self._tickers)
         if n <= 1:
@@ -169,7 +190,15 @@ class GBMSimulator:
                 corr[i, j] = rho
                 corr[j, i] = rho
 
-        self._cholesky = np.linalg.cholesky(corr)
+        try:
+            self._cholesky = np.linalg.cholesky(corr)
+        except np.linalg.LinAlgError:
+            logger.warning(
+                "Cholesky rebuild failed for %d tickers (non-positive-definite "
+                "correlation matrix); falling back to uncorrelated draws",
+                n,
+            )
+            self._cholesky = None
 
     @staticmethod
     def _pairwise_correlation(t1: str, t2: str) -> float:
@@ -217,17 +246,18 @@ class SimulatorDataSource(MarketDataSource):
         self._task: asyncio.Task | None = None
 
     async def start(self, tickers: list[str]) -> None:
+        normalized_tickers = [normalize_ticker(ticker) for ticker in tickers]
         self._sim = GBMSimulator(
-            tickers=tickers,
+            tickers=normalized_tickers,
             event_probability=self._event_prob,
         )
         # Seed the cache with initial prices so SSE has data immediately
-        for ticker in tickers:
+        for ticker in normalized_tickers:
             price = self._sim.get_price(ticker)
             if price is not None:
                 self._cache.update(ticker=ticker, price=price)
         self._task = asyncio.create_task(self._run_loop(), name="simulator-loop")
-        logger.info("Simulator started with %d tickers", len(tickers))
+        logger.info("Simulator started with %d tickers", len(normalized_tickers))
 
     async def stop(self) -> None:
         if self._task and not self._task.done():
@@ -240,6 +270,7 @@ class SimulatorDataSource(MarketDataSource):
         logger.info("Simulator stopped")
 
     async def add_ticker(self, ticker: str) -> None:
+        ticker = normalize_ticker(ticker)
         if self._sim:
             self._sim.add_ticker(ticker)
             # Seed cache immediately so the ticker has a price right away
@@ -249,6 +280,7 @@ class SimulatorDataSource(MarketDataSource):
             logger.info("Simulator: added ticker %s", ticker)
 
     async def remove_ticker(self, ticker: str) -> None:
+        ticker = normalize_ticker(ticker)
         if self._sim:
             self._sim.remove_ticker(ticker)
         self._cache.remove(ticker)

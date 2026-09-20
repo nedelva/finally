@@ -17,24 +17,32 @@ class PriceCache:
 
     def __init__(self) -> None:
         self._prices: dict[str, PriceUpdate] = {}
+        self._session_open: dict[str, float] = {}
         self._lock = Lock()
         self._version: int = 0  # Monotonically increasing; bumped on every update
 
     def update(self, ticker: str, price: float, timestamp: float | None = None) -> PriceUpdate:
         """Record a new price for a ticker. Returns the created PriceUpdate.
 
-        Automatically computes direction and change from the previous price.
-        If this is the first update for the ticker, previous_price == price (direction='flat').
+        Automatically computes direction from the previous price and
+        change/change_percent from the session open (the first price
+        recorded for this ticker since it was added, or re-added after a
+        `remove()`). If this is the first update for the ticker,
+        previous_price == price (direction='flat') and session_open_price
+        == price (change/change_percent == 0).
         """
         with self._lock:
-            ts = timestamp or time.time()
+            ts = timestamp if timestamp is not None else time.time()
             prev = self._prices.get(ticker)
             previous_price = prev.price if prev else price
+            rounded_price = round(price, 2)
+            session_open = self._session_open.setdefault(ticker, rounded_price)
 
             update = PriceUpdate(
                 ticker=ticker,
-                price=round(price, 2),
+                price=rounded_price,
                 previous_price=round(previous_price, 2),
+                session_open_price=session_open,
                 timestamp=ts,
             )
             self._prices[ticker] = update
@@ -57,9 +65,15 @@ class PriceCache:
         return update.price if update else None
 
     def remove(self, ticker: str) -> None:
-        """Remove a ticker from the cache (e.g., when removed from watchlist)."""
+        """Remove a ticker from the cache (e.g., when removed from watchlist).
+
+        Also discards the ticker's session-open entry, so re-adding it
+        later establishes a fresh anchor from its new arrival price rather
+        than silently reusing a stale one.
+        """
         with self._lock:
             self._prices.pop(ticker, None)
+            self._session_open.pop(ticker, None)
 
     @property
     def version(self) -> int:

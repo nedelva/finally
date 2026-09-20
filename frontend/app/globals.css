@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0d1117;
+  --color-panel: #161b22;
+  --color-border: #30363d;
+  --color-accent-yellow: #ecad0a;
+  --color-primary-blue: #209dd7;
+  --color-secondary-purple: #753991;
+  --color-up: #16a34a;
+  --color-down: #dc2626;
+}
+
+/*
+ * Price-flash effect (MKT-02). `frontend/lib/usePriceFlash.ts` toggles these
+ * class names for ~550ms whenever a ticker's price changes. A keyframe
+ * animation is used rather than a plain CSS transition: the hook removes
+ * the class outright after 550ms, and a transition would snap back to its
+ * base state instantly on removal instead of fading out.
+ */
+.flash-up {
+  animation: flash-up-fade 550ms ease-out;
+}
+
+.flash-down {
+  animation: flash-down-fade 550ms ease-out;
+}
+
+@keyframes flash-up-fade {
+  from {
+    background-color: color-mix(in srgb, var(--color-up) 35%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-down-fade {
+  from {
+    background-color: color-mix(in srgb, var(--color-down) 35%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}

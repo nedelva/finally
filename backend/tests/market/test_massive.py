@@ -127,6 +127,19 @@ class TestMassiveDataSource:
         await source.add_ticker("  AAPL  ")
         assert "AAPL" in source.get_tickers()
 
+    async def test_start_normalizes_mixed_case_and_padded_tickers(self):
+        """start() normalizes every ticker before tracking or polling it."""
+        cache = PriceCache()
+        source = MassiveDataSource(api_key="test-key", price_cache=cache, poll_interval=60.0)
+
+        with patch("app.market.massive_client.RESTClient"):
+            with patch.object(source, "_fetch_snapshots", return_value=[]):
+                await source.start(["aapl"])
+
+        assert source.get_tickers() == ["AAPL"]
+
+        await source.stop()
+
     async def test_remove_ticker(self):
         """Test removing a ticker."""
         cache = PriceCache()

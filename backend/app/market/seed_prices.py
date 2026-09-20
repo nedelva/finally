@@ -1,5 +1,12 @@
 """Seed prices and per-ticker parameters for the market simulator."""
 
+# The ten tickers the app seeds with by default. Explicit and ordered, so
+# downstream code (app.main's lifespan) never relies on SEED_PRICES dict
+# insertion order to define "the default watchlist".
+DEFAULT_TICKERS: list[str] = [
+    "AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX",
+]
+
 # Realistic starting prices for the default watchlist (as of project creation)
 SEED_PRICES: dict[str, float] = {
     "AAPL": 190.00,

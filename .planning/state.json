@@ -1,0 +1,38 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Live Price Terminal",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Persistent Watchlist",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Trading & Portfolio",
+      "status": "in_progress"
+    },
+    {
+      "number": "4",
+      "name": "AI Copilot",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "One-Command Delivery",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (verify)",
+    "reason": "Phase 03 of 5 · 40% · ready to verify"
+  },
+  "updated_at": "2026-09-20T16:27:09.396Z"
+}

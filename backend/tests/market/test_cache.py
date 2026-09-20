@@ -101,3 +101,35 @@ class TestPriceCache:
         cache = PriceCache()
         update = cache.update("AAPL", 190.12345)
         assert update.price == 190.12
+
+    def test_session_open_holds_across_many_updates(self):
+        """The session open stays at the first recorded price while the
+        previous price tracks the prior update."""
+        cache = PriceCache()
+        cache.update("AAPL", 190.00)
+        cache.update("AAPL", 195.00)
+        update = cache.update("AAPL", 192.00)
+        assert update.change == 2.00
+        assert update.direction == "down"
+
+    def test_session_open_resets_after_remove_and_readd(self):
+        """Removing a ticker and updating it again sets a new session open
+        from the new arrival price rather than reusing the stale one."""
+        cache = PriceCache()
+        cache.update("AAPL", 190.00)
+        cache.remove("AAPL")
+        update = cache.update("AAPL", 250.00)
+        assert update.change == 0.00
+
+    def test_session_open_independent_across_tickers(self):
+        """Two different tickers keep independent session opens."""
+        cache = PriceCache()
+        cache.update("AAPL", 190.00)
+        cache.update("GOOGL", 175.00)
+        cache.update("AAPL", 195.00)
+        cache.update("GOOGL", 180.00)
+
+        aapl = cache.get("AAPL")
+        googl = cache.get("GOOGL")
+        assert aapl.change == 5.00
+        assert googl.change == 5.00

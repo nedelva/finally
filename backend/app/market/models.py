@@ -13,19 +13,22 @@ class PriceUpdate:
     ticker: str
     price: float
     previous_price: float
+    session_open_price: float
     timestamp: float = field(default_factory=time.time)  # Unix seconds
 
     @property
     def change(self) -> float:
-        """Absolute price change from previous update."""
-        return round(self.price - self.previous_price, 4)
+        """Absolute price change from the session open."""
+        return round(self.price - self.session_open_price, 4)
 
     @property
     def change_percent(self) -> float:
-        """Percentage change from previous update."""
-        if self.previous_price == 0:
+        """Percentage change from the session open."""
+        if self.session_open_price == 0:
             return 0.0
-        return round((self.price - self.previous_price) / self.previous_price * 100, 4)
+        return round(
+            (self.price - self.session_open_price) / self.session_open_price * 100, 4
+        )
 
     @property
     def direction(self) -> str:

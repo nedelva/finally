@@ -124,6 +124,41 @@ class TestSimulatorDataSource:
 
         await source.stop()
 
+    async def test_add_ticker_normalizes_mixed_case(self):
+        """Mixed-case add_ticker() input keys the cache/get_tickers() uppercase."""
+        cache = PriceCache()
+        source = SimulatorDataSource(price_cache=cache, update_interval=0.1)
+        await source.start(["AAPL"])
+
+        await source.add_ticker("tsla")
+        assert "TSLA" in source.get_tickers()
+        assert "tsla" not in source.get_tickers()
+        assert cache.get("TSLA") is not None
+
+        await source.stop()
+
+    async def test_start_normalizes_padded_and_mixed_case_tickers(self):
+        """start() normalizes every ticker in the incoming list."""
+        cache = PriceCache()
+        source = SimulatorDataSource(price_cache=cache, update_interval=0.1)
+        await source.start(["aapl", " googl "])
+
+        assert set(source.get_tickers()) == {"AAPL", "GOOGL"}
+
+        await source.stop()
+
+    async def test_remove_ticker_normalizes_mixed_case(self):
+        """Mixed-case remove_ticker() input removes the uppercase-keyed entry."""
+        cache = PriceCache()
+        source = SimulatorDataSource(price_cache=cache, update_interval=0.1)
+        await source.start(["AAPL"])
+
+        await source.remove_ticker("aapl")
+        assert "AAPL" not in source.get_tickers()
+        assert cache.get("AAPL") is None
+
+        await source.stop()
+
     async def test_custom_event_probability(self):
         """Test creating source with custom event probability."""
         cache = PriceCache()
