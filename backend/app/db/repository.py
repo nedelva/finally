@@ -149,17 +149,48 @@ def total_portfolio_value(conn: sqlite3.Connection, price_cache) -> float:
 def record_snapshot(price_cache) -> dict:
     """Write one `portfolio_snapshots` row valued through `total_portfolio_value`.
 
-    RED stub — raises `NotImplementedError` until Task 1's GREEN step.
+    Opens its own connection and computes the value inside a `with conn:`
+    block via the shared `total_portfolio_value(conn, price_cache)` helper
+    `execute_trade`'s post-trade write already uses — routing through the
+    same helper (rather than re-summing positions here) is what keeps the
+    periodic writer, the in-transaction post-trade writer, and
+    `build_portfolio` from ever disagreeing on a valuation. Returns the
+    written `total_value` and `recorded_at`.
     """
-    raise NotImplementedError
+    conn = get_connection()
+    try:
+        with conn:
+            total_value = total_portfolio_value(conn, price_cache)
+            recorded_at = datetime.now(UTC).isoformat()
+            conn.execute(
+                "INSERT INTO portfolio_snapshots (id, user_id, total_value, recorded_at) "
+                "VALUES (?, ?, ?, ?)",
+                (str(uuid.uuid4()), DEFAULT_USER_ID, total_value, recorded_at),
+            )
+    finally:
+        conn.close()
+    return {"total_value": total_value, "recorded_at": recorded_at}
 
 
 def get_snapshots() -> list[dict]:
-    """Return the current user's snapshots ascending by `recorded_at`.
+    """Return the current user's snapshots, ascending by `recorded_at`.
 
-    RED stub — raises `NotImplementedError` until Task 1's GREEN step.
+    Each row is a plain dict carrying exactly `total_value` and
+    `recorded_at` — the two columns match `PortfolioSnapshot` in
+    `frontend/lib/types.ts` exactly, so no extra keys are emitted. Ascending
+    order means the chart plots forward in time with no client-side sorting.
+    Returns an empty list when no snapshot has been recorded yet.
     """
-    raise NotImplementedError
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT total_value, recorded_at FROM portfolio_snapshots "
+            "WHERE user_id = ? ORDER BY recorded_at",
+            (DEFAULT_USER_ID,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
 
 
 def execute_trade(price_cache, ticker: str, side: str, quantity: float) -> dict:
