@@ -82,7 +82,12 @@ describe("Heatmap", () => {
       />,
     );
     const rect = container.querySelector('[data-testid="heatmap-tile-AAPL"] rect');
-    expect(rect?.getAttribute("style")).toContain("#8b949e");
+    // jsdom's CSSOM normalizes the literal #8b949e hex we set into rgb() when
+    // serializing the style attribute — assert the normalized form, and that
+    // neither semantic token leaked in, rather than the literal hex string.
+    expect(rect?.getAttribute("style")).toContain("rgb(139, 148, 158)");
+    expect(rect?.getAttribute("style")).not.toContain("var(--color-up)");
+    expect(rect?.getAttribute("style")).not.toContain("var(--color-down)");
   });
 
   it("calls onSelect exactly once with the tile's ticker on click", () => {

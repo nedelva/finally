@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
+import { Heatmap } from "@/components/Heatmap";
 import { MainChart } from "@/components/MainChart";
 import { PositionsTable } from "@/components/PositionsTable";
 import { TradeBar } from "@/components/TradeBar";
@@ -71,14 +72,27 @@ function Terminal() {
 
       <TradeBar watchlist={watchlist} onFilled={refetchPortfolio} />
 
-      <PositionsTable
-        positions={portfolio?.positions ?? []}
-        ticks={ticks}
-        loading={portfolioLoading}
-        error={portfolioError}
-        selectedTicker={selectedTicker}
-        onSelect={setSelectedTicker}
-      />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="lg:w-1/2">
+          <PositionsTable
+            positions={portfolio?.positions ?? []}
+            ticks={ticks}
+            loading={portfolioLoading}
+            error={portfolioError}
+            selectedTicker={selectedTicker}
+            onSelect={setSelectedTicker}
+          />
+        </div>
+        <div className="lg:w-1/2">
+          <Heatmap
+            positions={portfolio?.positions ?? []}
+            ticks={ticks}
+            loading={portfolioLoading}
+            error={portfolioError}
+            onSelect={setSelectedTicker}
+          />
+        </div>
+      </div>
     </main>
   );
 }
