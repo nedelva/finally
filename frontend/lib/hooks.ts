@@ -70,12 +70,18 @@ export function useLiveTotalValue(
 export function usePortfolioHistory(pollMs = 30000) {
   const [snapshots, setSnapshots] = useState<PortfolioSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   const refetch = useCallback(async () => {
     const res = await getPortfolioHistory();
     if (!mountedRef.current) return;
-    if (res.ok) setSnapshots(res.data.snapshots);
+    if (res.ok) {
+      setSnapshots(res.data.snapshots);
+      setError(null);
+    } else {
+      setError(res.error);
+    }
     setLoading(false);
   }, []);
 
@@ -92,7 +98,7 @@ export function usePortfolioHistory(pollMs = 30000) {
     };
   }, [refetch, pollMs]);
 
-  return { snapshots, loading, refetch };
+  return { snapshots, loading, error, refetch };
 }
 
 export function useWatchlist() {

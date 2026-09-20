@@ -22,6 +22,10 @@ import type { PriceTick, WatchlistEntry } from "@/lib/types";
 // useLiveTotalValue is mocked here too (03-02) — page.tsx now calls it to
 // feed Header's totalValue prop. A stable stub returning null is sufficient;
 // no test in this file asserts against the header's live-total figure.
+//
+// usePortfolioHistory is mocked here too (03-04) — page.tsx now calls it to
+// feed PnLChart's snapshots/error props. A stable empty-state stub is
+// sufficient; no test in this file asserts against the P&L chart.
 vi.mock("@/lib/hooks", () => ({
   useWatchlist: vi.fn(),
   usePortfolio: vi.fn(() => ({
@@ -31,6 +35,12 @@ vi.mock("@/lib/hooks", () => ({
     refetch: vi.fn(async () => {}),
   })),
   useLiveTotalValue: vi.fn(() => null),
+  usePortfolioHistory: vi.fn(() => ({
+    snapshots: [],
+    loading: false,
+    error: null,
+    refetch: vi.fn(async () => {}),
+  })),
 }));
 
 // Second, independent mock (of lib/api rather than lib/hooks) — the

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Heatmap } from "@/components/Heatmap";
 import { MainChart } from "@/components/MainChart";
+import { PnLChart } from "@/components/PnLChart";
 import { PositionsTable } from "@/components/PositionsTable";
 import { TradeBar } from "@/components/TradeBar";
 import { Watchlist } from "@/components/Watchlist";
-import { useLiveTotalValue, usePortfolio, useWatchlist } from "@/lib/hooks";
+import { useLiveTotalValue, usePortfolio, usePortfolioHistory, useWatchlist } from "@/lib/hooks";
 import { PriceStreamProvider, usePriceStreamContext } from "@/lib/PriceStreamContext";
 
 function Terminal() {
@@ -19,6 +20,12 @@ function Terminal() {
     error: portfolioError,
     refetch: refetchPortfolio,
   } = usePortfolio();
+  const {
+    snapshots,
+    loading: historyLoading,
+    error: historyError,
+    refetch: refetchHistory,
+  } = usePortfolioHistory();
   const liveTotalValue = useLiveTotalValue(portfolio, ticks);
   const [selectedTicker, setSelectedTicker] = useState<string | undefined>(undefined);
 
@@ -70,7 +77,13 @@ function Terminal() {
         </div>
       </div>
 
-      <TradeBar watchlist={watchlist} onFilled={refetchPortfolio} />
+      <TradeBar
+        watchlist={watchlist}
+        onFilled={() => {
+          void refetchPortfolio();
+          void refetchHistory();
+        }}
+      />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <div className="lg:w-1/2">
@@ -93,6 +106,13 @@ function Terminal() {
           />
         </div>
       </div>
+
+      <PnLChart
+        snapshots={snapshots}
+        currentTotalValue={portfolio?.total_value ?? null}
+        loading={historyLoading}
+        error={historyError}
+      />
     </main>
   );
 }
