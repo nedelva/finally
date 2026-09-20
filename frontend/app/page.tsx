@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { MainChart } from "@/components/MainChart";
+import { PositionsTable } from "@/components/PositionsTable";
 import { TradeBar } from "@/components/TradeBar";
 import { Watchlist } from "@/components/Watchlist";
 import { useLiveTotalValue, usePortfolio, useWatchlist } from "@/lib/hooks";
@@ -11,7 +12,12 @@ import { PriceStreamProvider, usePriceStreamContext } from "@/lib/PriceStreamCon
 function Terminal() {
   const { status, ticks, history, tickers } = usePriceStreamContext();
   const { watchlist } = useWatchlist();
-  const { portfolio, refetch: refetchPortfolio } = usePortfolio();
+  const {
+    portfolio,
+    loading: portfolioLoading,
+    error: portfolioError,
+    refetch: refetchPortfolio,
+  } = usePortfolio();
   const liveTotalValue = useLiveTotalValue(portfolio, ticks);
   const [selectedTicker, setSelectedTicker] = useState<string | undefined>(undefined);
 
@@ -64,6 +70,15 @@ function Terminal() {
       </div>
 
       <TradeBar watchlist={watchlist} onFilled={refetchPortfolio} />
+
+      <PositionsTable
+        positions={portfolio?.positions ?? []}
+        ticks={ticks}
+        loading={portfolioLoading}
+        error={portfolioError}
+        selectedTicker={selectedTicker}
+        onSelect={setSelectedTicker}
+      />
     </main>
   );
 }
