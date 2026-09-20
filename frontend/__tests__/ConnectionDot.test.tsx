@@ -55,15 +55,19 @@ describe("ConnectionDot", () => {
 
 describe("Header", () => {
   it("renders the brand text, the simulated-feed disclosure, and the connection dot for the given status", () => {
-    const { container, getByText } = render(<Header status="connected" />);
+    const { container, getByText } = render(
+      <Header status="connected" cashBalance={10000} totalValue={10000} />,
+    );
 
     expect(getByText("FinAlly")).toBeInTheDocument();
     expect(container.textContent).toContain("Simulated market data");
     expect(container.querySelector('[data-status="connected"]')).toBeInTheDocument();
   });
 
-  it("renders no dollar-denominated figure — portfolio total and cash balance arrive in a later phase", () => {
-    const { container } = render(<Header status="connected" />);
+  it("renders no dollar-denominated figure before the portfolio has loaded (PORT-01's em-dash rule)", () => {
+    const { container } = render(
+      <Header status="connected" cashBalance={null} totalValue={null} />,
+    );
 
     expect(container.textContent).not.toMatch(/\$\s?[\d,]/);
   });

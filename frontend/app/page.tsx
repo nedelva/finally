@@ -5,13 +5,14 @@ import { Header } from "@/components/Header";
 import { MainChart } from "@/components/MainChart";
 import { TradeBar } from "@/components/TradeBar";
 import { Watchlist } from "@/components/Watchlist";
-import { usePortfolio, useWatchlist } from "@/lib/hooks";
+import { useLiveTotalValue, usePortfolio, useWatchlist } from "@/lib/hooks";
 import { PriceStreamProvider, usePriceStreamContext } from "@/lib/PriceStreamContext";
 
 function Terminal() {
   const { status, ticks, history, tickers } = usePriceStreamContext();
   const { watchlist } = useWatchlist();
-  const { refetch: refetchPortfolio } = usePortfolio();
+  const { portfolio, refetch: refetchPortfolio } = usePortfolio();
+  const liveTotalValue = useLiveTotalValue(portfolio, ticks);
   const [selectedTicker, setSelectedTicker] = useState<string | undefined>(undefined);
 
   // Keeps the chart selection valid across two independent, differently
@@ -40,7 +41,11 @@ function Terminal() {
 
   return (
     <main className="flex min-h-screen flex-col gap-4 p-8">
-      <Header status={status} />
+      <Header
+        status={status}
+        cashBalance={portfolio?.cash_balance ?? null}
+        totalValue={liveTotalValue}
+      />
 
       <div
         data-testid="terminal-layout-row"

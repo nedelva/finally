@@ -1,21 +1,25 @@
 "use client";
 
 // Terminal header (MKT-05 dot mount point; T-01-04/T-01-13 mitigations).
-// Two things this component must never do: silently drop the
-// simulated-feed disclosure, and stand in a placeholder portfolio total or
-// cash balance. Both arrive with PORT-01 in Phase 3 — until then this
-// header shows no dollar-denominated figure at all, not a zero or a dash
-// styled to look implemented (see must_haves.prohibitions in
-// 01-05-PLAN.md).
+// PORT-01 landed in Phase 3: cash balance and live total portfolio value
+// now render here. The standing rule from Phase 1 still binds — neither
+// figure may show a placeholder or styled zero before real data exists.
+// `formatMoney` already renders an em dash for `null`/`undefined`/`NaN`,
+// so passing the raw (possibly-null) prop straight through covers both the
+// pre-first-fetch state and the fetch-failed state with the same code
+// path, honestly, with no faked number at any point.
 
+import { formatMoney } from "@/lib/format";
 import type { ConnectionStatus } from "@/lib/types";
 import { ConnectionDot } from "./ConnectionDot";
 
 export interface HeaderProps {
   status: ConnectionStatus;
+  cashBalance: number | null;
+  totalValue: number | null;
 }
 
-export function Header({ status }: HeaderProps) {
+export function Header({ status, cashBalance, totalValue }: HeaderProps) {
   return (
     <header className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3">
       <div className="flex flex-col gap-0.5">
@@ -24,7 +28,29 @@ export function Header({ status }: HeaderProps) {
           AI Trading Workstation — Simulated market data
         </p>
       </div>
-      <ConnectionDot status={status} />
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Cash</span>
+          <span
+            data-testid="header-cash"
+            className="text-base font-semibold tabular-nums text-gray-100"
+          >
+            {formatMoney(cashBalance)}
+          </span>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            Total Value
+          </span>
+          <span
+            data-testid="header-total-value"
+            className="text-base font-semibold tabular-nums text-gray-100"
+          >
+            {formatMoney(totalValue)}
+          </span>
+        </div>
+        <ConnectionDot status={status} />
+      </div>
     </header>
   );
 }

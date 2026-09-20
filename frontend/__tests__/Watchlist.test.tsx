@@ -18,6 +18,10 @@ import type { PriceTick, WatchlistEntry } from "@/lib/types";
 // TradeBar's onFilled prop, and every test in this file renders <Page />
 // through the same mocked module, so it needs a stable, non-crashing
 // default: none of these tests assert against portfolio state itself.
+//
+// useLiveTotalValue is mocked here too (03-02) — page.tsx now calls it to
+// feed Header's totalValue prop. A stable stub returning null is sufficient;
+// no test in this file asserts against the header's live-total figure.
 vi.mock("@/lib/hooks", () => ({
   useWatchlist: vi.fn(),
   usePortfolio: vi.fn(() => ({
@@ -26,6 +30,7 @@ vi.mock("@/lib/hooks", () => ({
     error: null,
     refetch: vi.fn(async () => {}),
   })),
+  useLiveTotalValue: vi.fn(() => null),
 }));
 
 // Second, independent mock (of lib/api rather than lib/hooks) — the
