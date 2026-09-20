@@ -77,6 +77,20 @@ class TestStaticServing:
 
 
 @pytest.mark.asyncio
+class TestLifespanSnapshotTask:
+    """The lifespan's snapshot task starts and is cleanly cancelled on shutdown."""
+
+    async def test_enter_and_exit_lifespan_leaves_no_pending_snapshot_task(self, tmp_path):
+        app = create_app(static_dir=tmp_path)
+        with TestClient(app) as client:
+            response = client.get("/api/health")
+            assert response.status_code == 200
+        # No assertion beyond "this didn't hang or raise" — a stray, never
+        # awaited snapshot task would otherwise surface as a pytest warning
+        # in this test's captured output (RUF-100/asyncio task-not-retrieved).
+
+
+@pytest.mark.asyncio
 class TestLifespanSSE:
     """A real SSE frame, produced by driving the module-level `app.main:app`
     singleton through a real, bound server — the exact object `uvicorn

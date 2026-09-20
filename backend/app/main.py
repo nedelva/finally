@@ -11,6 +11,7 @@ Phase 5's container CMD binds to.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -28,6 +29,7 @@ from app.market import (
     create_market_data_source,
     create_stream_router,
     normalize_ticker,
+    snapshot_loop,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,7 +103,12 @@ def create_app(
         app.state.price_cache = price_cache
         app.state.market_source = source
         logger.info("Market data source started with %d tickers", len(tickers))
+        snapshot_task = asyncio.create_task(snapshot_loop(price_cache), name="snapshot-loop")
         yield
+        snapshot_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await snapshot_task
+        logger.info("Snapshot task stopped")
         await source.stop()
         logger.info("Market data source stopped")
 
