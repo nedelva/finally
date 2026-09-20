@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPortfolio, getPortfolioHistory, getWatchlist } from "./api";
-import type { Portfolio, PortfolioSnapshot, WatchlistEntry } from "./types";
+import { deriveLivePosition } from "./positionMath";
+import type { Portfolio, PortfolioSnapshot, PriceStreamEvent, WatchlistEntry } from "./types";
 
 /**
  * Fetches `GET /api/portfolio` on mount, after every trade (via `refetch`),
@@ -44,6 +45,26 @@ export function usePortfolio(pollMs = 20000) {
   }, [refetch, pollMs]);
 
   return { portfolio, loading, error, refetch };
+}
+
+/**
+ * Pure derivation over props, not a fetching hook — holds no state and runs
+ * no effect. Routes every position through `deriveLivePosition` (rather than
+ * recomputing `quantity * price` inline) so this total always agrees with the
+ * positions table, and so a position with no live tick falls back to the
+ * server's own `market_value` (D-03) instead of to zero.
+ */
+export function useLiveTotalValue(
+  portfolio: Portfolio | null,
+  ticks: PriceStreamEvent,
+): number | null {
+  if (!portfolio) return null;
+  let total = portfolio.cash_balance;
+  for (const position of portfolio.positions) {
+    const livePrice = ticks[position.ticker]?.price;
+    total += deriveLivePosition(position, livePrice).marketValue;
+  }
+  return total;
 }
 
 export function usePortfolioHistory(pollMs = 30000) {
