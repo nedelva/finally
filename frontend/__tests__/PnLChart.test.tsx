@@ -114,6 +114,37 @@ describe("PnLChart", () => {
     expect(container.querySelectorAll(".recharts-dot")).toHaveLength(2);
   });
 
+  it("renders the axis tick for the true recorded time, not a scale-mismatched date (WR-02)", () => {
+    // buildData() must feed formatClock Unix *seconds* (its numeric
+    // contract, matching MainChart's PriceTick.timestamp) rather than the
+    // milliseconds Date.parse()/Date.now() return — otherwise every tick
+    // and tooltip label renders a date ~56,000 years in the future.
+    //
+    // Deliberately not on an exact minute/second boundary: a whole-second
+    // timestamp (e.g. midnight UTC) produces the *same* rendered hour:minute
+    // whether or not the ms->s conversion below is applied — the bug is a
+    // x1000 scale error, and toLocaleTimeString({hour, minute}) drops the
+    // date entirely, so only a non-round time-of-day actually distinguishes
+    // "seconds" from "milliseconds interpreted as seconds".
+    const recordedAt = "2026-01-01T13:37:42.123Z";
+    const expectedTick = new Date(Date.parse(recordedAt)).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const { container } = render(
+      <PnLChart
+        snapshots={[snapshot(10000, recordedAt)]}
+        currentTotalValue={10000}
+        loading={false}
+        error={null}
+        width={400}
+        height={240}
+      />,
+    );
+
+    expect(container.textContent ?? "").toContain(expectedTick);
+  });
+
   it("renders no time-range control of any kind (D-12)", () => {
     const snapshots = [snapshot(10000, "2026-01-01T00:00:00Z")];
     const { container } = render(

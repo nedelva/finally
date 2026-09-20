@@ -118,12 +118,15 @@ function buildData(
 ): ChartPoint[] | null {
   if (snapshots.length > 0) {
     return snapshots.map((snapshot) => ({
-      timestamp: Date.parse(snapshot.recorded_at),
+      // formatClock (like MainChart's PriceTick.timestamp) treats a numeric
+      // input as Unix seconds, not milliseconds — divide down here so axis
+      // ticks and the tooltip render the real snapshot time (WR-02).
+      timestamp: Date.parse(snapshot.recorded_at) / 1000,
       total_value: snapshot.total_value,
     }));
   }
   if (currentTotalValue !== null) {
-    return [{ timestamp: Date.now(), total_value: currentTotalValue }];
+    return [{ timestamp: Date.now() / 1000, total_value: currentTotalValue }];
   }
   return null;
 }
