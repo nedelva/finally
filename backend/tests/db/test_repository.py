@@ -1,8 +1,28 @@
-"""Tests for `app.db.repository.add_watchlist_ticker`/`remove_watchlist_ticker`."""
+"""Tests for `app.db.repository.add_watchlist_ticker`/`remove_watchlist_ticker`/
+`execute_trade`/`get_positions`/`get_cash_balance`/`total_portfolio_value`."""
 
 import pytest
 
-from app.db import add_watchlist_ticker, get_watchlist, remove_watchlist_ticker
+from app.db import (
+    add_watchlist_ticker,
+    execute_trade,
+    get_cash_balance,
+    get_positions,
+    get_watchlist,
+    remove_watchlist_ticker,
+    total_portfolio_value,
+)
+from app.db.connection import get_connection
+from app.market import PriceCache
+
+
+def _seeded_cache(prices: dict[str, float]) -> PriceCache:
+    """A PriceCache seeded with prices for tickers already on the default
+    seeded watchlist (AAPL, MSFT, ... — see `app.market.DEFAULT_TICKERS`)."""
+    cache = PriceCache()
+    for ticker, price in prices.items():
+        cache.update(ticker=ticker, price=price)
+    return cache
 
 
 class TestAddWatchlistTicker:
@@ -69,3 +89,156 @@ class TestRemoveWatchlistTicker:
         result = remove_watchlist_ticker("PYPL")
 
         assert result is False
+
+
+class TestGetCashBalance:
+    """Synchronous repository-level tests against a freshly-seeded database."""
+
+    def test_returns_default_seed_balance_on_fresh_db(self, initialized_db):
+        assert get_cash_balance() == 10000.0
+
+
+class TestGetPositions:
+    """Synchronous repository-level tests against a freshly-seeded database."""
+
+    def test_returns_empty_list_on_fresh_db(self, initialized_db):
+        assert get_positions() == []
+
+
+class TestExecuteTrade:
+    """Synchronous repository-level tests against a freshly-seeded database.
+
+    AAPL and MSFT are already on the seeded watchlist (`DEFAULT_TICKERS`), so
+    these tests never need to call `add_watchlist_ticker` themselves — doing
+    so would raise a duplicate `ValueError` against the seed data.
+    """
+
+    def test_buy_debits_cash_and_creates_position(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+
+        execute_trade(cache, "AAPL", "buy", 2)
+
+        assert get_cash_balance() == 9800.0
+        positions = get_positions()
+        assert len(positions) == 1
+        assert positions[0]["ticker"] == "AAPL"
+        assert positions[0]["quantity"] == 2.0
+        assert positions[0]["avg_cost"] == 100.0
+
+    def test_second_buy_at_different_price_computes_weighted_average(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        cache.update(ticker="AAPL", price=200.0)
+
+        execute_trade(cache, "AAPL", "buy", 2)
+
+        positions = get_positions()
+        assert positions[0]["quantity"] == 4.0
+        assert positions[0]["avg_cost"] == 150.0
+
+    def test_sell_leaves_avg_cost_unchanged(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        cache.update(ticker="AAPL", price=500.0)
+
+        execute_trade(cache, "AAPL", "sell", 1)
+
+        positions = get_positions()
+        assert positions[0]["quantity"] == 1.0
+        assert positions[0]["avg_cost"] == 100.0
+
+    def test_selling_the_entire_fractional_position_removes_the_row(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 1.5)
+
+        execute_trade(cache, "AAPL", "sell", 1.5)
+
+        assert get_positions() == []
+
+    def test_overselling_raises_and_leaves_state_byte_identical(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        cash_before = get_cash_balance()
+        positions_before = get_positions()
+
+        with pytest.raises(ValueError):
+            execute_trade(cache, "AAPL", "sell", 3)
+
+        assert get_cash_balance() == cash_before
+        assert get_positions() == positions_before
+
+    def test_buy_exceeding_cash_by_one_cent_raises_and_appends_no_trade_row(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 10000.01})
+
+        with pytest.raises(ValueError):
+            execute_trade(cache, "AAPL", "buy", 1)
+
+        assert get_cash_balance() == 10000.0
+        conn = get_connection()
+        try:
+            count = conn.execute("SELECT COUNT(*) FROM trades").fetchone()[0]
+        finally:
+            conn.close()
+        assert count == 0
+
+    def test_buy_exactly_affordable_quantity_leaves_cash_at_exactly_zero(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 10000.0})
+
+        execute_trade(cache, "AAPL", "buy", 1)
+
+        assert get_cash_balance() == 0.0
+
+    @pytest.mark.parametrize("quantity", [0, -5])
+    def test_non_positive_quantity_raises_before_any_write(self, initialized_db, quantity):
+        cache = _seeded_cache({"AAPL": 100.0})
+        cash_before = get_cash_balance()
+
+        with pytest.raises(ValueError):
+            execute_trade(cache, "AAPL", "buy", quantity)
+
+        assert get_cash_balance() == cash_before
+        assert get_positions() == []
+
+    def test_ticker_not_on_watchlist_raises_even_with_a_cache_price(self, initialized_db):
+        cache = PriceCache()
+        cache.update(ticker="ZZZZ", price=50.0)
+
+        with pytest.raises(ValueError):
+            execute_trade(cache, "ZZZZ", "buy", 1)
+
+    def test_successful_trade_writes_a_snapshot_matching_total_portfolio_value(
+        self, initialized_db
+    ):
+        cache = _seeded_cache({"AAPL": 100.0})
+
+        execute_trade(cache, "AAPL", "buy", 2)
+
+        conn = get_connection()
+        try:
+            snapshot_rows = conn.execute("SELECT total_value FROM portfolio_snapshots").fetchall()
+            assert len(snapshot_rows) == 1
+            snapshot_value = snapshot_rows[0]["total_value"]
+            expected = total_portfolio_value(conn, cache)
+        finally:
+            conn.close()
+        assert snapshot_value == expected
+
+    def test_snapshot_equals_total_value_when_a_held_ticker_has_no_cache_entry(
+        self, initialized_db
+    ):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+        cache.remove("AAPL")
+        cache.update(ticker="MSFT", price=50.0)
+
+        execute_trade(cache, "MSFT", "buy", 1)
+
+        conn = get_connection()
+        try:
+            latest = conn.execute(
+                "SELECT total_value FROM portfolio_snapshots ORDER BY recorded_at DESC LIMIT 1"
+            ).fetchone()
+            expected = total_portfolio_value(conn, cache)
+        finally:
+            conn.close()
+        assert latest["total_value"] == expected
