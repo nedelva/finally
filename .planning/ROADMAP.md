@@ -126,7 +126,7 @@ Plans:
   4. Positions table shows ticker, quantity, average cost, current price, unrealized P&L, and % change for every holding, with price-driven values updating live
   5. Portfolio heatmap sizes each position by weight and colours it green for profit or red for loss, and the P&L chart shows total portfolio value over time, gaining new points as time passes and immediately after each trade
 
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -139,7 +139,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — Positions table and portfolio heatmap, with click-to-select tiles and the neutral-colour fallback treatment
+- [x] 03-03-PLAN.md — Positions table and portfolio heatmap, with click-to-select tiles and the neutral-colour fallback treatment
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -211,7 +211,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
-| 3. Trading & Portfolio | 2/4 | In Progress|  |
+| 3. Trading & Portfolio | 3/4 | In Progress|  |
 | 4. AI Copilot | 0/TBD | Not started | - |
 | 5. One-Command Delivery | 0/TBD | Not started | - |
 
