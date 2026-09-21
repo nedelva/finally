@@ -161,3 +161,11 @@ None - no new external service configuration required. `LLM_MOCK=true` (already 
 ---
 *Phase: 04-ai-copilot*
 *Completed: 2026-09-21*
+
+## Self-Check: PASSED
+
+All 9 modified files verified present on disk (repository.py, watchlist.py,
+chat.py, mock.py, test_repository.py, test_watchlist.py, test_chat.py,
+ChatPanel.tsx, ChatPanel.test.tsx) plus this SUMMARY.md. All 7 commits
+verified present in `git log --oneline --all` (820d0ff, 4bcb02e, 4eb4281,
+d80d565, 71697bd, b8a5706, 6ec4fa5). No missing items.
