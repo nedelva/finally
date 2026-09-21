@@ -375,6 +375,32 @@ def insert_chat_message(role: str, content: str, actions: dict | None) -> dict:
     }
 
 
+def get_chat_history() -> list[dict]:
+    """Return every persisted chat turn for the current user, oldest first.
+
+    Selects `id, role, content, actions, created_at` — the five columns named
+    explicitly, never a star-select and never a whole-row spread — so
+    `user_id` and any future schema column can never leak into the eventual
+    HTTP response. No `LIMIT`: this matches `get_snapshots`'s established
+    no-pagination baseline for this single-user app, unlike
+    `get_recent_chat_messages`'s bounded read, which exists for the prompt's
+    token budget — a different concern from what the panel renders on
+    reload. `actions` is returned exactly as stored (a JSON string or
+    `None`); parsing it into an object is the route's job, not this
+    function's, mirroring the rest of this module's raw-row convention.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, role, content, actions, created_at FROM chat_messages "
+            "WHERE user_id = ? ORDER BY created_at",
+            (DEFAULT_USER_ID,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
 def get_recent_chat_messages(limit: int) -> list[dict]:
     """Return the current user's most recent chat turns, oldest first.
 

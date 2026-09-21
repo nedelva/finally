@@ -13,6 +13,7 @@ Public API:
     get_snapshots            - Read the current user's snapshots ascending by recorded_at
     insert_chat_message      - Insert one chat_messages row for the current user
     get_recent_chat_messages - Read the last N chat_messages rows, oldest first
+    get_chat_history         - Read every chat_messages row for the current user, oldest first
 """
 
 from .init import init_db
@@ -20,6 +21,7 @@ from .repository import (
     add_watchlist_ticker,
     execute_trade,
     get_cash_balance,
+    get_chat_history,
     get_positions,
     get_recent_chat_messages,
     get_snapshots,
@@ -43,4 +45,5 @@ __all__ = [
     "get_snapshots",
     "insert_chat_message",
     "get_recent_chat_messages",
+    "get_chat_history",
 ]

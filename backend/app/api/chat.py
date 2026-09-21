@@ -10,6 +10,7 @@ paths (no second, looser route), and persists both turns.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 
 from fastapi import APIRouter, Request
@@ -21,6 +22,7 @@ from app.api.watchlist import build_watchlist
 from app.db import (
     add_watchlist_ticker,
     execute_trade,
+    get_chat_history,
     get_recent_chat_messages,
     insert_chat_message,
     remove_watchlist_ticker,
@@ -205,5 +207,31 @@ def create_chat_router(price_cache: PriceCache) -> APIRouter:
         )
 
         return JSONResponse(status_code=200, content=response_dict)
+
+    @router.get("/chat/history")
+    async def get_chat_history_route() -> dict:
+        """Return every persisted chat turn, oldest first, actions already parsed.
+
+        Mirrors `get_portfolio_history_route`'s shape: a single
+        `asyncio.to_thread` read, no pagination, one top-level response key.
+        `actions` is parsed here (server-side) rather than left as the raw
+        stored JSON string — handing the frontend a string would force it to
+        double-decode and would silently break pill rendering for every
+        restored assistant turn. FastAPI matches routes by method, so this
+        GET and `POST /api/chat` above share the same `/api/chat` prefix
+        with no ordering hazard.
+        """
+        rows = await asyncio.to_thread(get_chat_history)
+        messages = [
+            {
+                "id": row["id"],
+                "role": row["role"],
+                "content": row["content"],
+                "actions": json.loads(row["actions"]) if row["actions"] else None,
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+        return {"messages": messages}
 
     return router
