@@ -36,7 +36,7 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 - [x] **CHAT-03**: AI assistant can execute trades on the user's behalf when asked or agreed to, shown inline in chat as confirmations, with no manual approval step
 - [x] **CHAT-04**: AI assistant can add/remove watchlist tickers on the user's behalf, shown inline in chat as confirmations
 - [x] **CHAT-05**: If an AI-initiated trade fails validation (e.g. insufficient cash or shares), the assistant reports the failure conversationally
-- [ ] **CHAT-06**: Chat conversation history persists and reloads on return visits
+- [x] **CHAT-06**: Chat conversation history persists and reloads on return visits
 
 ### Ops
 
@@ -87,7 +87,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-03 | Phase 4 | Complete |
 | CHAT-04 | Phase 4 | Complete |
 | CHAT-05 | Phase 4 | Complete |
-| CHAT-06 | Phase 4 | Pending |
+| CHAT-06 | Phase 4 | Complete |
 | OPS-01 | Phase 5 | Pending |
 | OPS-02 | Phase 5 | Pending |
 
