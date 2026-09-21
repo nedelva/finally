@@ -168,7 +168,7 @@ Plans:
   4. A request the portfolio cannot support (buying beyond available cash, selling shares not held) produces a conversational explanation of the failure and leaves cash, positions, and watchlist untouched
   5. Reloading the browser restores the prior conversation history
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 Plans:
 **Wave 1**
@@ -177,7 +177,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — Action dispatch: watchlist changes then trades, per-action executed/failed reporting, the D-01/D-02 held-position removal guard, and inline confirmation pills
+- [x] 04-02-PLAN.md — Action dispatch: watchlist changes then trades, per-action executed/failed reporting, the D-01/D-02 held-position removal guard, and inline confirmation pills
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -226,7 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
-| 4. AI Copilot | 1/3 | In Progress|  |
+| 4. AI Copilot | 2/3 | In Progress|  |
 | 5. One-Command Delivery | 0/TBD | Not started | - |
 
 ---
