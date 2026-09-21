@@ -12,14 +12,19 @@
 // all locked by 04-UI-SPEC.md — do not improvise copy or introduce a class
 // name outside the eight tokens declared in globals.css's @theme block.
 //
-// Inline action confirmations (CHAT-03..05) and history rehydration
-// (CHAT-06) land in 04-02/04-03 — this plan's POST /api/chat always returns
-// empty `trades`/`watchlist_changes` arrays, so no confirmation pill UI
-// exists here yet.
+// Inline action confirmation pills (CHAT-03..05) render beneath each
+// assistant message from its already-threaded `actions` field — watchlist
+// changes first, then trades, matching the backend's own dispatch order
+// (app/api/chat.py: watchlist_changes run to completion before the first
+// trade). Colour is by status only (--color-up executed / --color-down
+// failed), never by action kind, per 04-UI-SPEC.md's single green-succeeded/
+// red-failed rule already established by the Buy/Sell button colors.
+// History rehydration (CHAT-06) still lands in 04-03.
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { postChatMessage } from "@/lib/api";
-import type { ChatMessage } from "@/lib/types";
+import { formatMoney } from "@/lib/format";
+import type { ChatMessage, ChatResponse, ChatTradeAction, ChatWatchlistAction } from "@/lib/types";
 
 // Mirrors backend/app/api/chat.py's MAX_MESSAGE_CHARS so the route's
 // over-length 400 can never be triggered from this input — the UI-SPEC's
@@ -35,6 +40,66 @@ let messageIdCounter = 0;
 function nextMessageId(): string {
   messageIdCounter += 1;
   return `chat-msg-${messageIdCounter}`;
+}
+
+// Copywriting Contract, verbatim (04-UI-SPEC.md) — the trade-executed copy
+// is the same string TradeBar.tsx renders for a manual fill.
+function tradePillCopy(trade: ChatTradeAction): string {
+  if (trade.status === "executed") {
+    const verbPast = trade.side === "buy" ? "Bought" : "Sold";
+    return `${verbPast} ${trade.quantity} ${trade.ticker} @ ${formatMoney(trade.price)}`;
+  }
+  const verb = trade.side === "buy" ? "Buy" : "Sell";
+  return `${verb} ${trade.ticker} failed — ${trade.error}`;
+}
+
+function watchlistPillCopy(change: ChatWatchlistAction): string {
+  if (change.status === "executed") {
+    const verbPast = change.action === "add" ? "Added" : "Removed";
+    const suffix = change.action === "add" ? "to watchlist" : "from watchlist";
+    return `${verbPast} ${change.ticker} ${suffix}`;
+  }
+  const verb = change.action === "add" ? "Add" : "Remove";
+  return `${verb} ${change.ticker} failed — ${change.error}`;
+}
+
+const PILL_BASE_CLASS =
+  "max-w-[85%] whitespace-pre-wrap break-words rounded border px-2 py-1 text-xs font-medium";
+const PILL_EXECUTED_CLASS = "border-[var(--color-up)] text-[var(--color-up)]";
+const PILL_FAILED_CLASS = "border-[var(--color-down)] text-[var(--color-down)]";
+
+function ActionPills({ actions }: { actions: ChatResponse }) {
+  if (actions.watchlist_changes.length === 0 && actions.trades.length === 0) {
+    return null;
+  }
+  return (
+    <div className="flex flex-col gap-1" data-testid="chat-action-pills">
+      {actions.watchlist_changes.map((change, index) => (
+        <span
+          key={`watchlist-${index}-${change.ticker}`}
+          data-testid="chat-action-pill"
+          data-status={change.status}
+          className={`${PILL_BASE_CLASS} ${
+            change.status === "executed" ? PILL_EXECUTED_CLASS : PILL_FAILED_CLASS
+          }`}
+        >
+          {watchlistPillCopy(change)}
+        </span>
+      ))}
+      {actions.trades.map((trade, index) => (
+        <span
+          key={`trade-${index}-${trade.ticker}`}
+          data-testid="chat-action-pill"
+          data-status={trade.status}
+          className={`${PILL_BASE_CLASS} ${
+            trade.status === "executed" ? PILL_EXECUTED_CLASS : PILL_FAILED_CLASS
+          }`}
+        >
+          {tradePillCopy(trade)}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function ChatPanel() {
@@ -138,7 +203,9 @@ export function ChatPanel() {
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex flex-col gap-1 ${
+                      message.role === "user" ? "items-end" : "items-start"
+                    }`}
                   >
                     <p
                       className={
@@ -149,6 +216,9 @@ export function ChatPanel() {
                     >
                       {message.content}
                     </p>
+                    {message.role === "assistant" && message.actions && (
+                      <ActionPills actions={message.actions} />
+                    )}
                   </div>
                 ))
               )}
