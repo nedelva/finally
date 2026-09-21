@@ -68,17 +68,39 @@ def add_watchlist_ticker(ticker: str) -> dict:
 def remove_watchlist_ticker(ticker: str) -> bool:
     """Delete a watchlist row for the current user.
 
-    Expects an already-normalized ticker. Deletes only from the `watchlist`
-    table — removal is a display-list change, not a cascading purge, so this
-    never touches `positions`, `trades`, `portfolio_snapshots`, or
-    `chat_messages`. Returns whether a row was actually deleted (read from
-    the cursor's `rowcount`), following this project's convention that
-    absence is a return value, not an exception, and giving the route what
-    it needs to distinguish a 204 from a 404.
+    Expects an already-normalized ticker. Reads `positions` to enforce the
+    held-position guard (D-01/D-02/D-03) but still writes only to the
+    `watchlist` table — removal is a display-list change, not a cascading
+    purge, so this never writes to `positions`, `trades`,
+    `portfolio_snapshots`, or `chat_messages`. Raises `ValueError` if the
+    user still holds the ticker, naming it and the held quantity, following
+    this repository's convention that a caller-level rejection is a
+    `ValueError` (the same convention `add_watchlist_ticker` uses for a
+    duplicate on this same table). Otherwise returns whether a row was
+    actually deleted (read from the cursor's `rowcount`), following this
+    project's convention that absence is a return value, not an exception,
+    and giving the route what it needs to distinguish a 204 from a 404.
     """
     conn = get_connection()
     try:
         with conn:
+            # BEGIN IMMEDIATE acquires the write lock before the first
+            # SELECT, mirroring execute_trade's WR-01 rationale: this
+            # function now reads (positions) before it writes (watchlist
+            # delete), and sqlite3's default deferred transaction only opens
+            # on the first write. Without this escalation, a concurrent buy
+            # could commit between this guard's SELECT and the DELETE,
+            # removing a ticker that is held by the time the delete lands.
+            conn.execute("BEGIN IMMEDIATE")
+            position_row = conn.execute(
+                "SELECT quantity FROM positions WHERE user_id = ? AND ticker = ?",
+                (DEFAULT_USER_ID, ticker),
+            ).fetchone()
+            if position_row is not None and position_row["quantity"] > 1e-9:
+                raise ValueError(
+                    f"You still hold {position_row['quantity']} shares of {ticker} — "
+                    "sell first."
+                )
             cursor = conn.execute(
                 "DELETE FROM watchlist WHERE user_id = ? AND ticker = ?",
                 (DEFAULT_USER_ID, ticker),

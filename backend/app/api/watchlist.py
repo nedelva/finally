@@ -125,13 +125,19 @@ def create_watchlist_router(price_cache: PriceCache) -> APIRouter:
 
         Order of operations is load-bearing, mirroring the POST handler:
         normalize the path segment -> delete (no notify on a no-op absent
-        delete) -> notify the running market data source so the ticker
-        stops appearing in the next SSE frame. A 204 carries no body, so the
-        frontend's 204 special-case in `removeWatchlistTicker` never
-        attempts to parse one.
+        delete, and no notify on a held-position 409) -> notify the running
+        market data source so the ticker stops appearing in the next SSE
+        frame. A 204 carries no body, so the frontend's 204 special-case in
+        `removeWatchlistTicker` never attempts to parse one. D-01/D-02: a
+        held-position `ValueError` from the repository guard returns before
+        reaching the notify, since a held ticker must keep streaming so the
+        position stays priced.
         """
         normalized = normalize_ticker(ticker)
-        removed = await asyncio.to_thread(remove_watchlist_ticker, normalized)
+        try:
+            removed = await asyncio.to_thread(remove_watchlist_ticker, normalized)
+        except ValueError as exc:
+            return JSONResponse(status_code=409, content={"error": str(exc)})
         if not removed:
             return JSONResponse(
                 status_code=404,
