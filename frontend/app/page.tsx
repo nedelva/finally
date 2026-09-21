@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { Header } from "@/components/Header";
 import { Heatmap } from "@/components/Heatmap";
 import { MainChart } from "@/components/MainChart";
@@ -61,58 +62,66 @@ function Terminal() {
         totalValue={liveTotalValue}
       />
 
-      <div
-        data-testid="terminal-layout-row"
-        className="flex flex-col gap-4 lg:flex-row lg:items-start"
-      >
-        <div className="lg:w-1/2">
-          <Watchlist selectedTicker={selectedTicker} onSelect={setSelectedTicker} />
-        </div>
-        <div className="lg:w-1/2">
-          <MainChart
-            selectedTicker={selectedTicker}
-            history={selectedTicker ? (history[selectedTicker] ?? []) : []}
-            tick={selectedTicker ? ticks[selectedTicker] : undefined}
-          />
-        </div>
-      </div>
-
-      <TradeBar
-        watchlist={watchlist}
-        onFilled={() => {
-          void refetchPortfolio();
-          void refetchHistory();
-        }}
-      />
-
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="lg:w-1/2">
-          <PositionsTable
-            positions={portfolio?.positions ?? []}
-            ticks={ticks}
-            loading={portfolioLoading}
-            error={portfolioError}
-            selectedTicker={selectedTicker}
-            onSelect={setSelectedTicker}
+        <div className="flex flex-1 min-w-0 flex-col gap-4">
+          <div
+            data-testid="terminal-layout-row"
+            className="flex flex-col gap-4 lg:flex-row lg:items-start"
+          >
+            <div className="lg:w-1/2">
+              <Watchlist selectedTicker={selectedTicker} onSelect={setSelectedTicker} />
+            </div>
+            <div className="lg:w-1/2">
+              <MainChart
+                selectedTicker={selectedTicker}
+                history={selectedTicker ? (history[selectedTicker] ?? []) : []}
+                tick={selectedTicker ? ticks[selectedTicker] : undefined}
+              />
+            </div>
+          </div>
+
+          <TradeBar
+            watchlist={watchlist}
+            onFilled={() => {
+              void refetchPortfolio();
+              void refetchHistory();
+            }}
+          />
+
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="lg:w-1/2">
+              <PositionsTable
+                positions={portfolio?.positions ?? []}
+                ticks={ticks}
+                loading={portfolioLoading}
+                error={portfolioError}
+                selectedTicker={selectedTicker}
+                onSelect={setSelectedTicker}
+              />
+            </div>
+            <div className="lg:w-1/2">
+              <Heatmap
+                positions={portfolio?.positions ?? []}
+                ticks={ticks}
+                loading={portfolioLoading}
+                error={portfolioError}
+                onSelect={setSelectedTicker}
+              />
+            </div>
+          </div>
+
+          <PnLChart
+            snapshots={snapshots}
+            currentTotalValue={portfolio?.total_value ?? null}
+            loading={historyLoading}
+            error={historyError}
           />
         </div>
-        <div className="lg:w-1/2">
-          <Heatmap
-            positions={portfolio?.positions ?? []}
-            ticks={ticks}
-            loading={portfolioLoading}
-            error={portfolioError}
-            onSelect={setSelectedTicker}
-          />
+
+        <div className="w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-4rem)]">
+          <ChatPanel />
         </div>
       </div>
-
-      <PnLChart
-        snapshots={snapshots}
-        currentTotalValue={portfolio?.total_value ?? null}
-        loading={historyLoading}
-        error={historyError}
-      />
     </main>
   );
 }
