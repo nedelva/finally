@@ -1,6 +1,8 @@
 """Tests for `app.db.repository.add_watchlist_ticker`/`remove_watchlist_ticker`/
 `execute_trade`/`get_positions`/`get_cash_balance`/`total_portfolio_value`."""
 
+import uuid
+
 import pytest
 
 from app.db import (
@@ -91,6 +93,61 @@ class TestRemoveWatchlistTicker:
         result = remove_watchlist_ticker("PYPL")
 
         assert result is False
+
+    def test_remove_held_ticker_raises_value_error_naming_the_ticker(self, initialized_db):
+        # D-01/D-02/D-03: AAPL is already on the seeded watchlist.
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+
+        with pytest.raises(ValueError, match="AAPL"):
+            remove_watchlist_ticker("AAPL")
+
+    def test_remove_held_ticker_leaves_the_watchlist_row_in_place(self, initialized_db):
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 2)
+
+        with pytest.raises(ValueError):
+            remove_watchlist_ticker("AAPL")
+
+        assert "AAPL" in {row["ticker"] for row in get_watchlist()}
+
+    def test_remove_succeeds_when_no_position_row_exists(self, initialized_db):
+        # AAPL is watchlisted by seed data but never traded.
+        result = remove_watchlist_ticker("AAPL")
+
+        assert result is True
+        assert "AAPL" not in {row["ticker"] for row in get_watchlist()}
+
+    def test_remove_succeeds_when_position_quantity_is_just_above_epsilon(self, initialized_db):
+        # D-03 boundary: quantity strictly greater than 1e-9 counts as held.
+        cache = _seeded_cache({"AAPL": 100.0})
+        execute_trade(cache, "AAPL", "buy", 1.0 + 2e-9)
+
+        with pytest.raises(ValueError, match="AAPL"):
+            remove_watchlist_ticker("AAPL")
+
+    def test_remove_succeeds_when_position_quantity_is_exactly_at_epsilon(self, initialized_db):
+        # D-03 boundary: quantity at or below 1e-9 counts as not held.
+        # execute_trade deletes the positions row once quantity drops to
+        # <= 1e-9 on a sell, so simulate the exact-epsilon case by inserting
+        # a positions row directly rather than trading down to it (a trade
+        # can't land on exactly 1e-9 through normal buy/sell arithmetic).
+        add_watchlist_ticker("ZZZZ")
+        conn = get_connection()
+        try:
+            with conn:
+                conn.execute(
+                    "INSERT INTO positions (id, user_id, ticker, quantity, avg_cost, updated_at) "
+                    "VALUES (?, 'default', 'ZZZZ', 1e-9, 10.0, datetime('now'))",
+                    (str(uuid.uuid4()),),
+                )
+        finally:
+            conn.close()
+
+        result = remove_watchlist_ticker("ZZZZ")
+
+        assert result is True
+        assert "ZZZZ" not in {row["ticker"] for row in get_watchlist()}
 
 
 class TestGetCashBalance:

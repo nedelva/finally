@@ -223,6 +223,26 @@ class TestRemoveWatchlist:
         assert second.status_code == 404
         assert before == after
 
+    def test_remove_held_ticker_returns_409_and_survives_a_subsequent_get(
+        self, client, fake_market_source
+    ):
+        # D-01/D-02/D-03: seed a price and buy AAPL (one of the ten seeded
+        # default tickers) before attempting to remove it.
+        client.app.state.price_cache.update(ticker="AAPL", price=100.0)
+        client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 2})
+        fake_market_source.removed.clear()
+
+        response = client.delete("/api/watchlist/AAPL")
+
+        assert response.status_code == 409
+        body = response.json()
+        assert "error" in body and body["error"]
+        tickers = {entry["ticker"] for entry in client.get("/api/watchlist").json()["watchlist"]}
+        assert "AAPL" in tickers
+        # The 409 path must never notify the market source — the position
+        # still needs a live price, so the ticker must keep streaming.
+        assert fake_market_source.removed == []
+
     def test_remove_does_not_touch_positions_trades_snapshots_or_chat_messages(self, client):
         from app.db.connection import get_connection
 
