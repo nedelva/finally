@@ -9,6 +9,7 @@ event loop. Every SQL statement uses `?` placeholders bound through the
 
 from __future__ import annotations
 
+import json
 import math
 import sqlite3
 import uuid
@@ -311,3 +312,63 @@ def execute_trade(price_cache, ticker: str, side: str, quantity: float) -> dict:
         "price": price,
         "executed_at": now,
     }
+
+
+def insert_chat_message(role: str, content: str, actions: dict | None) -> dict:
+    """Insert one `chat_messages` row for the current user.
+
+    Mirrors `add_watchlist_ticker`'s insert-with-UUID-and-ISO-timestamp
+    shape. `actions` is serialized with `json.dumps` when not `None` and
+    bound as SQL `NULL` otherwise — the user turn always passes `None`
+    here, the assistant turn passes the full response payload dict.
+    Returns the inserted row as a plain dict with `actions` still the
+    Python object (not the serialized string), matching this module's
+    convention of returning caller-friendly values.
+    """
+    row_id = str(uuid.uuid4())
+    created_at = datetime.now(UTC).isoformat()
+    conn = get_connection()
+    try:
+        with conn:
+            conn.execute(
+                "INSERT INTO chat_messages (id, user_id, role, content, actions, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    row_id,
+                    DEFAULT_USER_ID,
+                    role,
+                    content,
+                    json.dumps(actions) if actions is not None else None,
+                    created_at,
+                ),
+            )
+    finally:
+        conn.close()
+    return {
+        "id": row_id,
+        "role": role,
+        "content": content,
+        "actions": actions,
+        "created_at": created_at,
+    }
+
+
+def get_recent_chat_messages(limit: int) -> list[dict]:
+    """Return the current user's most recent chat turns, oldest first.
+
+    Selects `role, content` ordered by `created_at` descending with a
+    bound `LIMIT ?` (so a large history is never fully scanned just to
+    read the tail), then reverses the result in Python so the caller
+    receives turns ready to hand straight to `build_messages` — oldest
+    conversation turn first, newest last.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT role, content FROM chat_messages WHERE user_id = ? "
+            "ORDER BY created_at DESC LIMIT ?",
+            (DEFAULT_USER_ID, limit),
+        ).fetchall()
+        return [dict(row) for row in reversed(rows)]
+    finally:
+        conn.close()

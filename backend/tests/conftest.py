@@ -22,3 +22,18 @@ def isolate_finally_db(tmp_path, monkeypatch):
     order-dependent.
     """
     monkeypatch.setenv("FINALLY_DB_PATH", str(tmp_path / "test.db"))
+
+
+@pytest.fixture(autouse=True)
+def force_llm_mock(monkeypatch):
+    """Force `LLM_MOCK=true` for every test in the suite.
+
+    Belongs at this root level, not in `tests/llm/conftest.py`, because
+    `tests/api/test_chat.py` lives in a different test package and would
+    otherwise reach the real `completion()` — with no `.env` in this
+    checkout that means an auth failure or a hung network call in the
+    middle of the suite. A test wanting the real code path must
+    `monkeypatch.delenv("LLM_MOCK", raising=False)` and stub `completion`
+    itself.
+    """
+    monkeypatch.setenv("LLM_MOCK", "true")

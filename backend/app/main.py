@@ -17,10 +17,11 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import create_portfolio_router, create_watchlist_router
+from app.api import create_chat_router, create_portfolio_router, create_watchlist_router
 from app.db import get_watchlist, init_db
 from app.market import (
     DEFAULT_TICKERS,
@@ -41,6 +42,13 @@ STATIC_DIR_ENV_VAR = "FINALLY_STATIC_DIR"
 
 _BACKEND_DIR = Path(__file__).resolve().parents[1]
 _REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# Explicit path rather than python-dotenv's cwd-upward search, because the
+# backend is routinely run as `uv run --directory backend ...`, whose cwd is
+# `backend/`, not the repo root. A missing `.env` is not an error —
+# `load_dotenv` is a no-op when the file is absent, which is the current
+# state of this checkout.
+load_dotenv(_REPO_ROOT / ".env")
 
 
 def resolve_static_dir() -> Path | None:
@@ -120,6 +128,7 @@ def create_app(
     app.include_router(create_stream_router(price_cache))
     app.include_router(create_watchlist_router(price_cache))
     app.include_router(create_portfolio_router(price_cache))
+    app.include_router(create_chat_router(price_cache))
 
     @app.get("/api/health")
     async def health() -> dict[str, str]:
