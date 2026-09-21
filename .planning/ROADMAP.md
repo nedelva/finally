@@ -168,12 +168,12 @@ Plans:
   4. A request the portfolio cannot support (buying beyond available cash, selling shares not held) produces a conversational explanation of the failure and leaves cash, positions, and watchlist untouched
   5. Reloading the browser restores the prior conversation history
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — TRACER: `POST /api/chat` grounded in the real portfolio, the `app/llm` package behind it, chat-message persistence, and the docked AI Copilot panel
+- [x] 04-01-PLAN.md — TRACER: `POST /api/chat` grounded in the real portfolio, the `app/llm` package behind it, chat-message persistence, and the docked AI Copilot panel
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -226,7 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
-| 4. AI Copilot | 0/3 | Planned     | - |
+| 4. AI Copilot | 1/3 | In Progress|  |
 | 5. One-Command Delivery | 0/TBD | Not started | - |
 
 ---
