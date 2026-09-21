@@ -1,5 +1,6 @@
 import type {
   AddWatchlistResponse,
+  ChatHistoryResponse,
   ChatResponse,
   Portfolio,
   PortfolioHistoryResponse,
@@ -104,6 +105,10 @@ export async function removeWatchlistTicker(ticker: string): Promise<ApiResult<n
   } catch {
     return { ok: false, error: "Network error — unable to reach the server." };
   }
+}
+
+export function getChatHistory(): Promise<ApiResult<ChatHistoryResponse>> {
+  return getJson<ChatHistoryResponse>("/api/chat/history");
 }
 
 export async function postChatMessage(message: string): Promise<ApiResult<ChatResponse>> {

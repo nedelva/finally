@@ -127,6 +127,27 @@ export interface ChatMessage {
   createdAt: number;
 }
 
+/**
+ * One persisted `chat_messages` row as returned by `GET /api/chat/history`.
+ * Deliberately NOT merged with `ChatMessage`: that type's `createdAt: number`
+ * is a client-local timestamp for optimistic messages that exist before
+ * persistence, while `ChatHistoryEntry.created_at` is the server's ISO
+ * string for an already-persisted row. `ChatPanel` maps one into the other
+ * on hydration rather than unifying the two shapes — do not "clean up" the
+ * duplication.
+ */
+export interface ChatHistoryEntry {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  actions: ChatResponse | null;
+  created_at: string;
+}
+
+export interface ChatHistoryResponse {
+  messages: ChatHistoryEntry[];
+}
+
 export interface ApiErrorBody {
   error: string;
 }

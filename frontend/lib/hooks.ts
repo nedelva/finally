@@ -1,9 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getPortfolio, getPortfolioHistory, getWatchlist } from "./api";
+import { getChatHistory, getPortfolio, getPortfolioHistory, getWatchlist } from "./api";
 import { deriveLivePosition } from "./positionMath";
-import type { Portfolio, PortfolioSnapshot, PriceStreamEvent, WatchlistEntry } from "./types";
+import type {
+  ChatHistoryEntry,
+  Portfolio,
+  PortfolioSnapshot,
+  PriceStreamEvent,
+  WatchlistEntry,
+} from "./types";
 
 /**
  * Fetches `GET /api/portfolio` on mount, after every trade (via `refetch`),
@@ -131,4 +137,42 @@ export function useWatchlist() {
   }, [refetch]);
 
   return { watchlist, loading, error, refetch };
+}
+
+/**
+ * Fetches `GET /api/chat/history` once on mount, with no poll interval —
+ * unlike `usePortfolio`/`usePortfolioHistory`, chat history is read once and
+ * then grows only through `POST /api/chat` responses handled locally by
+ * `ChatPanel`, matching `useWatchlist`'s fetch-on-mount shape exactly.
+ */
+export function useChatHistory() {
+  const [entries, setEntries] = useState<ChatHistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  const refetch = useCallback(async () => {
+    const res = await getChatHistory();
+    if (!mountedRef.current) return;
+    if (res.ok) {
+      setEntries(res.data.messages);
+      setError(null);
+    } else {
+      setError(res.error);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    // See usePortfolio above: setState happens after refetch's `await`, not
+    // synchronously in this effect body.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refetch();
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [refetch]);
+
+  return { entries, loading, error, refetch };
 }

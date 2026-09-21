@@ -19,12 +19,23 @@
 // trade). Colour is by status only (--color-up executed / --color-down
 // failed), never by action kind, per 04-UI-SPEC.md's single green-succeeded/
 // red-failed rule already established by the Buy/Sell button colors.
-// History rehydration (CHAT-06) still lands in 04-03.
+//
+// History rehydration (CHAT-06): useChatHistory() fetches GET
+// /api/chat/history once on mount; a hydratedRef-guarded effect prepends the
+// restored entries into `messages` exactly once, so a first-ever visit still
+// gets the seed greeting and a returning user sees their conversation.
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { postChatMessage } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
-import type { ChatMessage, ChatResponse, ChatTradeAction, ChatWatchlistAction } from "@/lib/types";
+import { useChatHistory } from "@/lib/hooks";
+import type {
+  ChatHistoryEntry,
+  ChatMessage,
+  ChatResponse,
+  ChatTradeAction,
+  ChatWatchlistAction,
+} from "@/lib/types";
 
 // Mirrors backend/app/api/chat.py's MAX_MESSAGE_CHARS so the route's
 // over-length 400 can never be triggered from this input — the UI-SPEC's
@@ -35,11 +46,32 @@ const MAX_MESSAGE_CHARS = 4000;
 const SEED_GREETING =
   "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.";
 const SEND_FAILURE_COPY = "Message not sent — check your connection and try again.";
+// Copywriting Contract, verbatim (04-UI-SPEC.md) — the history-fetch loading
+// placeholder mirrors Watchlist.tsx's "Loading watchlist…" row pattern, and
+// the load-error banner is explicit that sending still works.
+const HISTORY_LOADING_COPY = "Loading conversation…";
+const HISTORY_ERROR_COPY =
+  "Couldn't load conversation history — you can still send new messages.";
 
 let messageIdCounter = 0;
 function nextMessageId(): string {
   messageIdCounter += 1;
   return `chat-msg-${messageIdCounter}`;
+}
+
+// Maps one persisted GET /api/chat/history entry into the local ChatMessage
+// shape. `actions` passes through unchanged so 04-02's pill rendering works
+// identically on a restored turn; `created_at` (server ISO string) becomes
+// `createdAt` (client-local number) via Date.parse — see the comment on
+// ChatHistoryEntry in lib/types.ts for why these two shapes stay distinct.
+function mapHistoryEntry(entry: ChatHistoryEntry): ChatMessage {
+  return {
+    id: entry.id,
+    role: entry.role,
+    content: entry.content,
+    actions: entry.actions,
+    createdAt: Date.parse(entry.created_at),
+  };
 }
 
 // Copywriting Contract, verbatim (04-UI-SPEC.md) — the trade-executed copy
@@ -117,6 +149,26 @@ export function ChatPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
+  // CHAT-06: fetch the persisted conversation once on mount and hydrate it
+  // into `messages`. `hydratedRef` guards against the effect re-firing on a
+  // later render — `entries` is a fresh array identity on every hook render,
+  // so a naive dependency-only guard would re-prepend on every resolution.
+  const { entries, loading: historyLoading, error: historyError } = useChatHistory();
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    if (historyLoading) return;
+    // Fires exactly once, on the first non-loading resolution — including a
+    // zero-entry resolution and a failed one — so the ref can never be left
+    // unset and re-fire later.
+    hydratedRef.current = true;
+    // Prepend rather than replace: a message the user managed to send during
+    // the fetch (Send is never disabled by historyLoading) survives, in the
+    // right position, after the restored history.
+    setMessages((prev) => [...entries.map(mapHistoryEntry), ...prev]);
+  }, [historyLoading, entries]);
+
   // Scrolls the newest bubble (or the Thinking bubble) into view on send and
   // on response arrival, mirroring the project's cleanup-on-unmount timer
   // convention — no timer is introduced here, so no cleanup is needed.
@@ -187,13 +239,32 @@ export function ChatPanel() {
 
       {!collapsed && (
         <>
+          {historyError && (
+            <p
+              data-testid="chat-history-error"
+              className="mt-4 whitespace-pre-wrap break-words text-sm text-[var(--color-down)]"
+            >
+              {HISTORY_ERROR_COPY}
+            </p>
+          )}
           <div
             ref={messagesRef}
             data-testid="chat-messages"
-            className="mt-4 max-h-[440px] overflow-y-auto rounded bg-[var(--color-bg)]"
+            className={`${
+              historyError ? "mt-2" : "mt-4"
+            } max-h-[440px] overflow-y-auto rounded bg-[var(--color-bg)]`}
           >
             <div className="flex flex-col gap-2 p-3">
-              {messages.length === 0 ? (
+              {historyLoading ? (
+                <div className="flex justify-start">
+                  <p
+                    data-testid="chat-history-loading"
+                    className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-gray-500"
+                  >
+                    {HISTORY_LOADING_COPY}
+                  </p>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex justify-start">
                   <p className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-white">
                     {SEED_GREETING}
