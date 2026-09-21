@@ -101,6 +101,10 @@ class TestChatTradeDispatch:
         assert any(p["ticker"] == "AAPL" for p in portfolio["positions"])
 
     def test_sell_not_held_returns_failed_action_and_changes_nothing(self, client):
+        # A live price is required to reach execute_trade's over-sell check
+        # at all — without one, the failure would be the earlier
+        # no-live-price rejection instead of the one under test here.
+        client.app.state.price_cache.update(ticker="AAPL", price=100.0)
         before_portfolio = client.get("/api/portfolio").json()
         before_watchlist = client.get("/api/watchlist").json()
 
