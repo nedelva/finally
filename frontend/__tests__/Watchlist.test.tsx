@@ -26,6 +26,11 @@ import type { PriceTick, WatchlistEntry } from "@/lib/types";
 // usePortfolioHistory is mocked here too (03-04) — page.tsx now calls it to
 // feed PnLChart's snapshots/error props. A stable empty-state stub is
 // sufficient; no test in this file asserts against the P&L chart.
+//
+// useChatHistory is mocked here too (04-03) — page.tsx renders ChatPanel in
+// its right column, which now calls useChatHistory() on mount for CHAT-06
+// rehydration. A stable empty-resolved stub is sufficient; no test in this
+// file asserts against the chat panel's restored conversation.
 vi.mock("@/lib/hooks", () => ({
   useWatchlist: vi.fn(),
   usePortfolio: vi.fn(() => ({
@@ -37,6 +42,12 @@ vi.mock("@/lib/hooks", () => ({
   useLiveTotalValue: vi.fn(() => null),
   usePortfolioHistory: vi.fn(() => ({
     snapshots: [],
+    loading: false,
+    error: null,
+    refetch: vi.fn(async () => {}),
+  })),
+  useChatHistory: vi.fn(() => ({
+    entries: [],
     loading: false,
     error: null,
     refetch: vi.fn(async () => {}),

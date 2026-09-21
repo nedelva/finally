@@ -1,27 +1,39 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatPanel } from "@/components/chat/ChatPanel";
-import { postChatMessage } from "@/lib/api";
-import type { ChatResponse } from "@/lib/types";
+import { getChatHistory, postChatMessage } from "@/lib/api";
+import type { ChatHistoryResponse, ChatResponse } from "@/lib/types";
 
 vi.mock("@/lib/api", () => ({
   postChatMessage: vi.fn(),
+  getChatHistory: vi.fn(),
 }));
 
 describe("ChatPanel", () => {
-  afterEach(() => {
-    vi.mocked(postChatMessage).mockReset();
+  beforeEach(() => {
+    // Default: every pre-existing test keeps asserting what it asserted
+    // before 04-03 — an empty, already-resolved history means hydration
+    // never adds anything and the seed-greeting/populated behavior below is
+    // unaffected.
+    vi.mocked(getChatHistory).mockResolvedValue({ ok: true, data: { messages: [] } });
   });
 
-  it("renders the seed greeting as an assistant bubble on first render", () => {
+  afterEach(() => {
+    vi.mocked(postChatMessage).mockReset();
+    vi.mocked(getChatHistory).mockReset();
+  });
+
+  it("renders the seed greeting as an assistant bubble once history resolves empty", async () => {
     render(<ChatPanel />);
 
-    expect(
-      screen.getByText(
-        "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.",
+        ),
+      ).toBeInTheDocument(),
+    );
   });
 
   it("disables Send while the input is empty or whitespace-only", async () => {
@@ -279,5 +291,173 @@ describe("ChatPanel", () => {
     expect(pills[0]).toHaveTextContent("Added PLTR to watchlist");
     expect(pills[1]).toHaveAttribute("data-status", "failed");
     expect(pills[1]).toHaveTextContent("Buy PLTR failed — No live price available for PLTR.");
+  });
+
+  describe("history rehydration (CHAT-06)", () => {
+    const SEED_GREETING_TEXT =
+      "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.";
+
+    it("calls getChatHistory exactly once on mount", async () => {
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(getChatHistory).toHaveBeenCalledTimes(1));
+    });
+
+    it("shows the history-loading placeholder and no seed greeting while history is pending", async () => {
+      let resolveHistory!: (value: { ok: true; data: ChatHistoryResponse }) => void;
+      vi.mocked(getChatHistory).mockReturnValue(
+        new Promise((resolve) => {
+          resolveHistory = resolve;
+        }),
+      );
+      render(<ChatPanel />);
+
+      expect(screen.getByTestId("chat-history-loading")).toHaveTextContent(
+        "Loading conversation…",
+      );
+      expect(screen.queryByText(SEED_GREETING_TEXT)).not.toBeInTheDocument();
+
+      resolveHistory({ ok: true, data: { messages: [] } });
+      await waitFor(() => expect(screen.getByText(SEED_GREETING_TEXT)).toBeInTheDocument());
+    });
+
+    it("renders every restored entry as a bubble in order, with no seed greeting", async () => {
+      vi.mocked(getChatHistory).mockResolvedValue({
+        ok: true,
+        data: {
+          messages: [
+            {
+              id: "h1",
+              role: "user",
+              content: "Older question",
+              actions: null,
+              created_at: "2024-01-01T00:00:00Z",
+            },
+            {
+              id: "h2",
+              role: "assistant",
+              content: "Older answer",
+              actions: null,
+              created_at: "2024-01-01T00:00:01Z",
+            },
+          ],
+        },
+      });
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(screen.getByText("Older question")).toBeInTheDocument());
+      expect(screen.getByText("Older answer")).toBeInTheDocument();
+      expect(screen.queryByText(SEED_GREETING_TEXT)).not.toBeInTheDocument();
+
+      const container = screen.getByTestId("chat-messages");
+      const text = container.textContent ?? "";
+      expect(text.indexOf("Older question")).toBeLessThan(text.indexOf("Older answer"));
+    });
+
+    it("shows the seed greeting and no error banner when history resolves empty", async () => {
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(screen.getByText(SEED_GREETING_TEXT)).toBeInTheDocument());
+      expect(screen.queryByTestId("chat-history-error")).not.toBeInTheDocument();
+    });
+
+    it("shows the load-error banner and the seed greeting beneath it on failure, without disabling input or Send", async () => {
+      const user = userEvent.setup();
+      vi.mocked(getChatHistory).mockResolvedValue({
+        ok: false,
+        error: "Network error — unable to reach the server.",
+      });
+      render(<ChatPanel />);
+
+      await waitFor(() =>
+        expect(screen.getByTestId("chat-history-error")).toHaveTextContent(
+          "Couldn't load conversation history — you can still send new messages.",
+        ),
+      );
+      expect(screen.getByText(SEED_GREETING_TEXT)).toBeInTheDocument();
+
+      const input = screen.getByTestId("chat-input") as HTMLInputElement;
+      expect(input).not.toBeDisabled();
+      await user.type(input, "hi");
+      expect(screen.getByTestId("chat-send")).not.toBeDisabled();
+    });
+
+    it("renders the action pill for a restored assistant entry, identical to a freshly received turn", async () => {
+      vi.mocked(getChatHistory).mockResolvedValue({
+        ok: true,
+        data: {
+          messages: [
+            {
+              id: "h1",
+              role: "user",
+              content: "buy 10 aapl",
+              actions: null,
+              created_at: "2024-01-01T00:00:00Z",
+            },
+            {
+              id: "h2",
+              role: "assistant",
+              content: "Done.",
+              actions: {
+                message: "Done.",
+                trades: [
+                  {
+                    ticker: "AAPL",
+                    side: "buy",
+                    quantity: 10,
+                    status: "executed",
+                    price: 190.5,
+                    error: null,
+                  },
+                ],
+                watchlist_changes: [],
+              },
+              created_at: "2024-01-01T00:00:01Z",
+            },
+          ],
+        },
+      });
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(screen.getAllByTestId("chat-action-pill")).toHaveLength(1));
+      const pill = screen.getByTestId("chat-action-pill");
+      expect(pill).toHaveAttribute("data-status", "executed");
+      expect(pill).toHaveTextContent("Bought 10 AAPL @ $190.50");
+    });
+
+    it("appends a newly sent exchange after the restored conversation rather than replacing it", async () => {
+      const user = userEvent.setup();
+      vi.mocked(getChatHistory).mockResolvedValue({
+        ok: true,
+        data: {
+          messages: [
+            {
+              id: "h1",
+              role: "user",
+              content: "Older question",
+              actions: null,
+              created_at: "2024-01-01T00:00:00Z",
+            },
+          ],
+        },
+      });
+      vi.mocked(postChatMessage).mockResolvedValue({
+        ok: true,
+        data: { message: "New answer.", trades: [], watchlist_changes: [] },
+      });
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(screen.getByText("Older question")).toBeInTheDocument());
+
+      await sendMessage(user, "New question");
+
+      await waitFor(() => expect(screen.getByText("New answer.")).toBeInTheDocument());
+      expect(screen.getByText("Older question")).toBeInTheDocument();
+      expect(screen.getByText("New question")).toBeInTheDocument();
+
+      const container = screen.getByTestId("chat-messages");
+      const text = container.textContent ?? "";
+      expect(text.indexOf("Older question")).toBeLessThan(text.indexOf("New question"));
+    });
   });
 });
