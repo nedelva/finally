@@ -3,8 +3,10 @@
 from types import SimpleNamespace
 
 from app.api.chat import MAX_MESSAGE_CHARS, _execute_watchlist_action
-from app.db import get_recent_chat_messages
+from app.db import get_chat_history, get_recent_chat_messages
 from app.llm.schema import WatchlistAction
+
+EXPECTED_HISTORY_ENTRY_KEYS = {"id", "role", "content", "actions", "created_at"}
 
 EXPECTED_RESPONSE_KEYS = {"message", "trades", "watchlist_changes"}
 
@@ -220,3 +222,76 @@ class TestChatDispatchResilience:
         assert body["watchlist_changes"][0]["status"] == "executed"
         assert body["trades"][0]["ticker"] == "AAPL"
         assert body["trades"][0]["status"] == "failed"
+
+
+class TestGetChatHistory:
+    """`GET /api/chat/history` — CHAT-06, every persisted turn readable back."""
+
+    def test_repository_read_on_empty_table_returns_empty_list(self, client):
+        assert get_chat_history() == []
+
+    def test_route_returns_200_with_a_single_messages_key(self, client):
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        assert set(response.json().keys()) == {"messages"}
+
+    def test_empty_table_route_returns_empty_messages_list(self, client):
+        response = client.get("/api/chat/history")
+
+        assert response.json() == {"messages": []}
+
+    def test_after_one_post_returns_two_entries_user_first_actions_null(self, client):
+        client.post("/api/chat", json={"message": "hello there"})
+
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        messages = response.json()["messages"]
+        assert len(messages) == 2
+        assert messages[0]["role"] == "user"
+        assert messages[0]["content"] == "hello there"
+        assert messages[0]["actions"] is None
+        assert messages[1]["role"] == "assistant"
+
+    def test_entries_are_ascending_by_created_at_across_multiple_turns(self, client):
+        client.post("/api/chat", json={"message": "first message"})
+        client.post("/api/chat", json={"message": "second message"})
+
+        messages = client.get("/api/chat/history").json()["messages"]
+
+        assert len(messages) == 4
+        contents = [m["content"] for m in messages if m["role"] == "user"]
+        assert contents == ["first message", "second message"]
+        created_ats = [m["created_at"] for m in messages]
+        assert created_ats == sorted(created_ats)
+
+    def test_each_entry_carries_exactly_the_five_expected_keys_no_leak(
+        self, client, fake_market_source
+    ):
+        client.post("/api/chat", json={"message": "add pltr"})
+
+        messages = client.get("/api/chat/history").json()["messages"]
+
+        assert len(messages) == 2
+        for entry in messages:
+            assert set(entry.keys()) == EXPECTED_HISTORY_ENTRY_KEYS
+        assert "user_id" not in messages[0]
+        assert "user_id" not in messages[1]
+
+    def test_assistant_turn_with_executed_action_returns_actions_as_parsed_dict(
+        self, client, fake_market_source
+    ):
+        client.post("/api/chat", json={"message": "add pltr"})
+
+        messages = client.get("/api/chat/history").json()["messages"]
+        assistant_entry = messages[1]
+
+        assert isinstance(assistant_entry["actions"], dict)
+        assert set(assistant_entry["actions"].keys()) == {
+            "message",
+            "trades",
+            "watchlist_changes",
+        }
+        assert assistant_entry["actions"]["watchlist_changes"][0]["ticker"] == "PLTR"
+        assert assistant_entry["actions"]["watchlist_changes"][0]["status"] == "executed"
