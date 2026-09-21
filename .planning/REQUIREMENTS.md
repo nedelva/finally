@@ -31,8 +31,8 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 
 ### AI Chat
 
-- [ ] **CHAT-01**: User can send a chat message to the AI assistant and receive a conversational response
-- [ ] **CHAT-02**: AI assistant's response is grounded in the user's current portfolio (cash, positions with P&L), watchlist with live prices, and recent conversation history
+- [x] **CHAT-01**: User can send a chat message to the AI assistant and receive a conversational response
+- [x] **CHAT-02**: AI assistant's response is grounded in the user's current portfolio (cash, positions with P&L), watchlist with live prices, and recent conversation history
 - [ ] **CHAT-03**: AI assistant can execute trades on the user's behalf when asked or agreed to, shown inline in chat as confirmations, with no manual approval step
 - [ ] **CHAT-04**: AI assistant can add/remove watchlist tickers on the user's behalf, shown inline in chat as confirmations
 - [ ] **CHAT-05**: If an AI-initiated trade fails validation (e.g. insufficient cash or shares), the assistant reports the failure conversationally
@@ -82,8 +82,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORT-06 | Phase 3 | Complete |
 | WTCH-01 | Phase 2 | Complete |
 | WTCH-02 | Phase 2 | Complete |
-| CHAT-01 | Phase 4 | Pending |
-| CHAT-02 | Phase 4 | Pending |
+| CHAT-01 | Phase 4 | Complete |
+| CHAT-02 | Phase 4 | Complete |
 | CHAT-03 | Phase 4 | Pending |
 | CHAT-04 | Phase 4 | Pending |
 | CHAT-05 | Phase 4 | Pending |
