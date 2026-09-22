@@ -9,7 +9,6 @@ dependencies = [
     "uvicorn[standard]>=0.32.0",
     "numpy>=2.0.0",
     "massive>=1.0.0",
-    "rich>=13.0.0",
     "litellm>=1.102.0",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.1",
@@ -22,6 +21,9 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.7.0",
+]
+demo = [
+    "rich>=13.0.0",
 ]
 
 [build-system]
