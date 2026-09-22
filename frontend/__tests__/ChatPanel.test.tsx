@@ -491,4 +491,38 @@ describe("ChatPanel", () => {
       expect(screen.getByTestId("chat-messages").scrollTop).toBe(1000);
     });
   });
+
+  describe("typography (04-UI-SPEC line-heights)", () => {
+    it("applies the Heading, Body, and Label line-heights to their respective elements", async () => {
+      const user = userEvent.setup();
+      vi.mocked(postChatMessage).mockResolvedValue({
+        ok: true,
+        data: {
+          message: "Done.",
+          trades: [],
+          watchlist_changes: [{ ticker: "PLTR", action: "add", status: "executed", error: null }],
+        },
+      });
+      render(<ChatPanel />);
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.",
+          ),
+        ).toBeInTheDocument(),
+      );
+      expect(screen.getByText("AI Copilot")).toHaveClass("leading-[1.3]");
+      expect(
+        screen.getByText(
+          "Hi, I'm FinAlly. Ask me about your portfolio, or tell me to buy, sell, or update your watchlist.",
+        ),
+      ).toHaveClass("leading-[1.5]");
+
+      await sendMessage(user, "add pltr");
+
+      await waitFor(() => expect(screen.getByTestId("chat-action-pill")).toBeInTheDocument());
+      expect(screen.getByTestId("chat-action-pill")).toHaveClass("leading-[1.4]");
+    });
+  });
 });
