@@ -1,0 +1,59 @@
+# FinAlly E2E harness (05-04-PLAN.md). Two services: the real production
+# image (built from the repo-root Dockerfile, exercising the packaged
+# artifact rather than the source tree) plus the official Playwright
+# runner container.
+#
+# Volume policy is the deliberate opposite of the production
+# docker-compose.yml: no volume mount at all. init_db() seeds the default
+# profile and ten-ticker watchlist only while users_profile is empty, so a
+# reused volume would make the fresh-start assertions pass once and fail on
+# every subsequent run (05-RESEARCH.md Common Pitfalls #5).
+#
+# Deviation from the plan's literal "app:8000" hostname (Rule 3 — blocking
+# issue found during execution): the app service is named "backend", not
+# "app". Chromium ships a compiled-in HSTS-preload entry for the Google-
+# owned ".app" gTLD that also covers the bare single-label hostname "app",
+# so any http:// navigation to "app:8000" gets silently upgraded to HTTPS
+# by the browser and fails with net::ERR_SSL_PROTOCOL_ERROR against this
+# plain-HTTP container — confirmed empirically: curl succeeds against
+# "app:8000", and Playwright succeeds against the same container by raw IP,
+# but fails by the "app" hostname with every HttpsUpgrades-family Chromium
+# flag disabled. "backend" is not a public-suffix-list/HSTS-preloaded name
+# and carries no such collision. The service still satisfies the underlying
+# intent of the must_haves truth (reachable only on the compose network,
+# publishing no host port) — only the literal label differs.
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      # LLM_MOCK must be the quoted string "true" — backend/app/llm/client.py
+      # compares against the literal lowercase string. An unquoted YAML
+      # boolean coerces to True/1 and silently disables mock mode, sending
+      # E2E traffic to the real OpenRouter API (05-RESEARCH.md Pitfall #7).
+      LLM_MOCK: "true"
+      OPENROUTER_API_KEY: "unused-under-mock"
+    # No volume mount — the container filesystem is disposable per run.
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Chromium is unstable under Docker's default 64MB /dev/shm.
+    ipc: host
+    working_dir: /tests
+    volumes:
+      - ../test:/tests
+    environment:
+      BASE_URL: "http://backend:8000"
+    command: sh -c "npm ci && npx playwright test"

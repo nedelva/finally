@@ -212,6 +212,12 @@ node_modules/
 .next/
 *.tsbuildinfo
 
+# Playwright E2E runtime artifacts (test/docker-compose.test.yml writes
+# these back to the host via its bind mount; never commit generated
+# per-run output)
+test/test-results/
+test/playwright-report/
+
 # FinAlly SQLite runtime data (db/.gitkeep is tracked; the DB file and its
 # WAL/SHM/journal sidecars are not)
 db/*.db
