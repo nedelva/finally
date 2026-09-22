@@ -33,6 +33,15 @@ from app.market import (
     snapshot_loop,
 )
 
+# Configure root-logger handling for the whole `app` package. Uvicorn's own
+# default logging config only touches its own "uvicorn"/"uvicorn.error"/
+# "uvicorn.access" loggers (disable_existing_loggers=False), so without this
+# call every `logger.info()` in the application — including the market-data
+# source selection log line operators rely on to confirm simulator vs.
+# Massive — is silently dropped under a real `uvicorn app.main:app` run,
+# since Python's root logger defaults to WARNING with no handler attached.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
 logger = logging.getLogger(__name__)
 
 # Explicit escape hatch for the static export directory. Set this to force a
