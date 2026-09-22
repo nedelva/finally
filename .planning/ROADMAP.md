@@ -157,7 +157,6 @@ Plans:
 ### Phase 4: AI Copilot
 
 **Goal**: The user talks to FinAlly in natural language and it answers from their actual portfolio and acts on it — placing trades and editing the watchlist without leaving the conversation
-**Mode:** mvp
 **Depends on**: Phase 3
 **Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06
 **Success Criteria** (what must be TRUE):
