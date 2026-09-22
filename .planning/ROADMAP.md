@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Live Price Terminal** - Stand up the FastAPI app, mount the existing SSE stream, and serve a dark terminal UI where 10 default tickers stream live (completed 2026-09-18)
 - [x] **Phase 2: Persistent Watchlist** - SQLite with lazy init and seed data, plus a watchlist the user can add to, remove from, and reload (completed 2026-09-19)
 - [x] **Phase 3: Trading & Portfolio** - Instant-fill market orders against live prices, with positions table, heatmap, P&L chart, and live cash (completed 2026-09-20)
-- [ ] **Phase 4: AI Copilot** - Chat assistant grounded in the real portfolio that executes trades and watchlist changes on request
+- [x] **Phase 4: AI Copilot** - Chat assistant grounded in the real portfolio that executes trades and watchlist changes on request (completed 2026-09-22)
 - [ ] **Phase 5: One-Command Delivery** - Multi-stage Docker image, start/stop scripts, persistent volume, and the Playwright E2E suite
 
 ## Phase Details
@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Live Price Terminal | 5/5 | Complete    | 2026-09-18 |
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
-| 4. AI Copilot | 3/3 | In Progress|  |
+| 4. AI Copilot | 3/3 | Complete    | 2026-09-22 |
 | 5. One-Command Delivery | 0/TBD | Not started | - |
 
 ---
