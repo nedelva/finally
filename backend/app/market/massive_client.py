@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-
-from massive import RESTClient
-from massive.rest.models import SnapshotMarketType
+from typing import TYPE_CHECKING
 
 from .cache import PriceCache
 from .interface import MarketDataSource
 from .ticker import normalize_ticker
+
+if TYPE_CHECKING:
+    from massive import RESTClient
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,8 @@ class MassiveDataSource(MarketDataSource):
         self._client: RESTClient | None = None
 
     async def start(self, tickers: list[str]) -> None:
+        from massive import RESTClient
+
         self._client = RESTClient(api_key=self._api_key)
         self._tickers = [normalize_ticker(ticker) for ticker in tickers]
 
@@ -123,6 +126,8 @@ class MassiveDataSource(MarketDataSource):
 
     def _fetch_snapshots(self) -> list:
         """Synchronous call to the Massive REST API. Runs in a thread."""
+        from massive.rest.models import SnapshotMarketType
+
         return self._client.get_snapshot_all(
             market_type=SnapshotMarketType.STOCKS,
             tickers=self._tickers,
