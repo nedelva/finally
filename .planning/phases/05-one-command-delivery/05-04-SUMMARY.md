@@ -148,3 +148,7 @@ None. `test/docker-compose.test.yml` requires no operator setup beyond Docker/Do
 
 ## Next Phase Readiness
 Plan 05-05 can add `test/e2e/02-*.spec.ts` onward, inheriting: the `backend`/`playwright` compose service names and `BASE_URL=http://backend:8000` (not `app:8000` — see Deviation 1), the two-digit spec-filename ordering convention, and the proven-both-directions suite command. No blockers.
+
+## Self-Check: PASSED
+
+All created files verified present on disk: `test/package.json`, `test/package-lock.json`, `test/playwright.config.ts`, `test/docker-compose.test.yml`, `test/e2e/01-fresh-start.spec.ts`, `.planning/phases/05-one-command-delivery/05-04-SUMMARY.md`. All three commits verified in `git log --oneline --all`: `7270572` (Task 2), `a7e60ab` (Task 3), `f62f013` (SUMMARY).
