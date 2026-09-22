@@ -1,0 +1,22 @@
+# Docker build context exclusions.
+#
+# This file must exist before the first `docker build` — without it, host
+# node_modules/ (darwin-arm64 native addons) and backend/.venv/ (macOS
+# cpython build) enter the Linux build context and break the build outright.
+# It also keeps secrets (.env) and runtime data (db/*.db*) out of image
+# layers — see threat T-05-01 in 05-01-PLAN.md.
+
+**/node_modules
+backend/.venv
+frontend/.next
+frontend/out
+frontend/tsconfig.tsbuildinfo
+.git
+.env
+db/*.db
+db/*.db-wal
+db/*.db-shm
+db/*.db-journal
+test/node_modules
+.planning
+**/__pycache__
