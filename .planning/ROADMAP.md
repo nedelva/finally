@@ -205,7 +205,22 @@ Plans:
   3. Start and stop scripts are safe to run repeatedly — no duplicate containers, no error on a second stop, and stopping never destroys the data volume
   4. The application runs correctly with only `OPENROUTER_API_KEY` set, falling back to the built-in simulator because no Massive key is present
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — TRACER: `.dockerignore`, the two-stage `Dockerfile` with build-time path-arithmetic assertions, non-root runtime, and `.env.example` — one `docker run` reaches the working app on port 8000
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — Dependency hygiene: `rich` demoted to a `demo` extra with a re-lock, and the Polygon SDK lazy-imported with its mandatory `test_massive.py` companion fix
+- [ ] 05-04-PLAN.md — E2E harness: package-legitimacy gate, `test/` manifest + committed lockfile + sequential Playwright config, the compose harness, and the fresh-start spec proving the gate fails honestly
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-02-PLAN.md — Operator lifecycle: four idempotent start/stop scripts, `docker-compose.yml`, README launch paths, and the restart-persistence proof
+- [ ] 05-05-PLAN.md — Remaining E2E scenarios: watchlist, trading, portfolio visuals, mocked chat, and SSE reconnect
 
 **Scope notes** (work with no REQ ID that must land here):
 
@@ -226,7 +241,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
 | 4. AI Copilot | 3/3 | Complete    | 2026-09-22 |
-| 5. One-Command Delivery | 0/TBD | Not started | - |
+| 5. One-Command Delivery | 0/5 | Planned | - |
 
 ---
 *Roadmap created: 2026-09-17*
