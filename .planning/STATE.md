@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-20)
 Phase: 04 (AI Copilot) — EXECUTING
 Plan: 1 of 3
 Status: Executing Phase 04
-Last activity: 2026-09-21 — Phase 04 execution started
+Last activity: 2026-09-22 - Completed quick task 260922-ljr: Fix the 3 UI blockers from .planning/phases/04-ai-copilot/04-UI-REVIEW.md
 
 Progress: [██████░░░░] 60%
 
@@ -128,6 +128,12 @@ None yet.
 - `.env.example` does not exist; `OPENROUTER_API_KEY` is required from Phase 4 onward.
 - Cache version-counter-skipped-on-empty-cache bug and daily-vs-tick-to-tick % change spec mismatch (`.planning/codebase/CONCERNS.md`) remain unfixed — deferred to whichever future phase touches that code path.
 - [Phase 3] Mobile tap-target confirmation for trade bar controls and a local validation-copy string outside the Copywriting Contract remain open (03-UI-REVIEW.md fixes #2/#3) — advisory, non-blocking.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260922-ljr | Fix the 3 UI blockers from 04-UI-REVIEW.md: scroll-to-bottom regression on collapse/expand, sidebar overflow hiding the chat form, missing UI-SPEC line-heights | 2026-09-22 | 1444693 | [260922-ljr-fix-the-3-ui-blockers-from-planning-phas](./quick/260922-ljr-fix-the-3-ui-blockers-from-planning-phas/) |
 
 ## Deferred Items
 
