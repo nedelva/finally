@@ -96,7 +96,7 @@ function watchlistPillCopy(change: ChatWatchlistAction): string {
 }
 
 const PILL_BASE_CLASS =
-  "max-w-[85%] whitespace-pre-wrap break-words rounded border px-2 py-1 text-xs font-medium";
+  "max-w-[85%] whitespace-pre-wrap break-words rounded border px-2 py-1 text-xs leading-[1.4] font-medium";
 const PILL_EXECUTED_CLASS = "border-[var(--color-up)] text-[var(--color-up)]";
 const PILL_FAILED_CLASS = "border-[var(--color-down)] text-[var(--color-down)]";
 
@@ -172,11 +172,15 @@ export function ChatPanel() {
   // Scrolls the newest bubble (or the Thinking bubble) into view on send and
   // on response arrival, mirroring the project's cleanup-on-unmount timer
   // convention — no timer is introduced here, so no cleanup is needed.
+  // `collapsed` is also a dependency: the expanded body is conditionally
+  // mounted behind `!collapsed && (...)`, so collapsing unmounts the scroll
+  // container entirely and expanding mounts a brand-new div whose scrollTop
+  // starts at 0 — only a re-run of this effect re-pins it to the bottom.
   useEffect(() => {
     const container = messagesRef.current;
     if (!container) return;
     container.scrollTop = container.scrollHeight;
-  }, [messages.length, sending]);
+  }, [messages.length, sending, collapsed]);
 
   const trimmed = input.trim();
   const sendDisabled = trimmed === "" || sending;
@@ -226,12 +230,12 @@ export function ChatPanel() {
       className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-white">AI Copilot</h2>
+        <h2 className="text-base leading-[1.3] font-semibold text-white">AI Copilot</h2>
         <button
           type="button"
           data-testid="chat-toggle"
           onClick={() => setCollapsed((prev) => !prev)}
-          className="text-xs font-medium text-gray-500"
+          className="text-xs leading-[1.4] font-medium text-gray-500"
         >
           {collapsed ? "Show" : "Hide"}
         </button>
@@ -242,7 +246,7 @@ export function ChatPanel() {
           {historyError && (
             <p
               data-testid="chat-history-error"
-              className="mt-4 whitespace-pre-wrap break-words text-sm text-[var(--color-down)]"
+              className="mt-4 whitespace-pre-wrap break-words text-sm leading-[1.5] text-[var(--color-down)]"
             >
               {HISTORY_ERROR_COPY}
             </p>
@@ -259,14 +263,14 @@ export function ChatPanel() {
                 <div className="flex justify-start">
                   <p
                     data-testid="chat-history-loading"
-                    className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-gray-500"
+                    className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm leading-[1.5] text-gray-500"
                   >
                     {HISTORY_LOADING_COPY}
                   </p>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex justify-start">
-                  <p className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-white">
+                  <p className="max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm leading-[1.5] text-white">
                     {SEED_GREETING}
                   </p>
                 </div>
@@ -281,8 +285,8 @@ export function ChatPanel() {
                     <p
                       className={
                         message.role === "user"
-                          ? "max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-primary-blue)] bg-[var(--color-primary-blue)]/20 px-3 py-2 text-sm text-white"
-                          : "max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-white"
+                          ? "max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-primary-blue)] bg-[var(--color-primary-blue)]/20 px-3 py-2 text-sm leading-[1.5] text-white"
+                          : "max-w-[85%] whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm leading-[1.5] text-white"
                       }
                     >
                       {message.content}
@@ -297,7 +301,7 @@ export function ChatPanel() {
                 <div className="flex justify-start">
                   <p
                     data-testid="chat-thinking"
-                    className="max-w-[85%] animate-pulse whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-white"
+                    className="max-w-[85%] animate-pulse whitespace-pre-wrap break-words rounded border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm leading-[1.5] text-white"
                   >
                     Thinking…
                   </p>
@@ -315,18 +319,18 @@ export function ChatPanel() {
               disabled={sending}
               maxLength={MAX_MESSAGE_CHARS}
               placeholder="Message FinAlly…"
-              className="flex-1 rounded border border-[var(--color-border)] bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--color-primary-blue)] disabled:opacity-50"
+              className="flex-1 rounded border border-[var(--color-border)] bg-transparent px-2 py-1.5 text-sm leading-[1.5] text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--color-primary-blue)] disabled:opacity-50"
             />
             <button
               type="submit"
               data-testid="chat-send"
               disabled={sendDisabled}
-              className="rounded bg-[var(--color-secondary-purple)] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded bg-[var(--color-secondary-purple)] px-4 py-1.5 text-sm leading-[1.5] font-semibold text-white disabled:opacity-50"
             >
               {sending ? "Sending…" : "Send"}
             </button>
           </form>
-          <p data-testid="chat-error" className="mt-2 text-sm text-[var(--color-down)] empty:hidden">
+          <p data-testid="chat-error" className="mt-2 text-sm leading-[1.5] text-[var(--color-down)] empty:hidden">
             {error}
           </p>
         </>
