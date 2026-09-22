@@ -182,3 +182,13 @@ Task 1's tracer slice (Dockerfile, `.dockerignore`) is proven end to end and rea
 ---
 *Phase: 05-one-command-delivery*
 *Completed: 2026-09-22*
+
+## Self-Check: PASSED
+
+- FOUND: Dockerfile
+- FOUND: .dockerignore
+- FOUND: .env.example
+- FOUND: .planning/phases/05-one-command-delivery/05-01-SUMMARY.md
+- FOUND: 7b68825 (Task 1 commit)
+- FOUND: 71ea52d (Task 2 commit)
+- FOUND: ae38c22 (SUMMARY commit)
