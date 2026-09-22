@@ -81,6 +81,8 @@ Verified by the planner against the working tree — do not re-derive these:
 
     TEST (`frontend/__tests__/ChatPanel.test.tsx`): add a new `describe` block, "scroll-to-bottom on expand", at the end of the outer `ChatPanel` describe. Give it its own scoped `beforeEach`/`afterEach` — the scrollHeight stub must NOT be hoisted to the file-level `beforeEach`, because the 19 existing tests share that scope and a non-zero scrollHeight could change what they observe.
 
+    Use `beforeEach`/`afterEach`, not `beforeAll`/`afterAll`: a per-file hook that installs the stub once will leak it to the remaining tests if any test in the block throws before teardown.
+
     In the scoped `beforeEach`, stub scrollHeight with `Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 1000 })`. This stub is mandatory, not incidental: jsdom reports `scrollHeight` as `0`, so without it the component assigns `scrollTop = 0` and the assertion passes vacuously against both the broken and the fixed component. In the scoped `afterEach`, restore with `delete (HTMLElement.prototype as unknown as Record&lt;string, unknown&gt;).scrollHeight` — jsdom's real accessor lives on `Element.prototype`, so deleting the `HTMLElement.prototype` shadow falls through to it. Do not stub `scrollTop`; jsdom stores assignments to it natively.
 
     The test body: `render(&lt;ChatPanel /&gt;)`, await the `chat-messages` testid, click `chat-toggle` (collapses), click `chat-toggle` again (expands), then assert `screen.getByTestId("chat-messages").scrollTop` is `1000`. Use `userEvent.setup()` and `await user.click(...)`, matching the existing collapse/expand test's style. The planner confirmed this test fails against the current component with "expected +0 to be 1000".
@@ -131,6 +133,8 @@ Verified by the planner against the working tree — do not re-derive these:
 
     The 12 sites in `ChatPanel.tsx`: the `PILL_BASE_CLASS` constant and the collapse-toggle button are the two `text-xs` sites; the `AI Copilot` `&lt;h2&gt;` is the single `text-base` site; the remaining nine are `text-sm` — the history-error paragraph, the history-loading bubble, the seed-greeting bubble, the user bubble, the assistant bubble, the thinking bubble, the input, the Send button, and the send-error paragraph.
 
+    For the pills specifically, add the class **inside the `PILL_BASE_CLASS` constant**, adjacent to the `text-xs` already there — not at either `ActionPills` template-interpolation site. A class added at the interpolation site still reaches the rendered element (so the test would pass) but leaves no adjacent pair in the constant, so the gate would fail while the test says green.
+
     Do not write any of these class-name literals into a code comment. The gate counts occurrences across the whole non-comment body of the file, and a class name mentioned in prose inflates the size-class count without a matching adjacent pair, failing the gate. Change only className strings; add no new elements and remove no existing classes.
 
     TEST (`frontend/__tests__/ChatPanel.test.tsx`): add one test asserting the three roles. Assert on the rendered elements rather than on source text — e.g. `expect(screen.getByText("AI Copilot")).toHaveClass("leading-[1.3]")`, the seed-greeting paragraph has `leading-[1.5]`, and a `chat-action-pill` (render a response carrying one action, mirroring the existing pill tests' setup) has `leading-[1.4]`.
@@ -146,7 +150,7 @@ Verified by the planner against the working tree — do not re-derive these:
 <verification>
 Run from the repo root after all three tasks:
 
-1. `npm --prefix frontend test` — the whole frontend suite is green (ChatPanel gains 2 tests: 21 total in that file).
+1. `npm --prefix frontend test` — the whole frontend suite is green. ChatPanel gains one test in Task 1 and one in Task 3, so that file reports 20 after Task 1 and **21 once all three tasks are done**.
 2. `npm --prefix frontend run typecheck` — clean.
 3. Both structural gates (Task 2 sidebar, Task 3 typography) print their PASS line.
 4. Human check: at >=1024px wide and ~620px tall, the chat input and Send button are reachable, and a collapsed-then-expanded panel shows the newest message rather than the top of the conversation.
