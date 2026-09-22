@@ -172,11 +172,15 @@ export function ChatPanel() {
   // Scrolls the newest bubble (or the Thinking bubble) into view on send and
   // on response arrival, mirroring the project's cleanup-on-unmount timer
   // convention — no timer is introduced here, so no cleanup is needed.
+  // `collapsed` is also a dependency: the expanded body is conditionally
+  // mounted behind `!collapsed && (...)`, so collapsing unmounts the scroll
+  // container entirely and expanding mounts a brand-new div whose scrollTop
+  // starts at 0 — only a re-run of this effect re-pins it to the bottom.
   useEffect(() => {
     const container = messagesRef.current;
     if (!container) return;
     container.scrollTop = container.scrollHeight;
-  }, [messages.length, sending]);
+  }, [messages.length, sending, collapsed]);
 
   const trimmed = input.trim();
   const sendDisabled = trimmed === "" || sending;

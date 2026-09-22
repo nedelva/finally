@@ -460,4 +460,35 @@ describe("ChatPanel", () => {
       expect(text.indexOf("Older question")).toBeLessThan(text.indexOf("New question"));
     });
   });
+
+  describe("scroll-to-bottom on expand", () => {
+    // jsdom hard-codes scrollHeight to 0 (defined on Element.prototype), so
+    // without this stub the component's scrollTop = scrollHeight assignment
+    // is always 0 = 0 — the assertion below would pass vacuously against
+    // both the broken and the fixed component. Scoped to this describe block
+    // (not the file-level beforeEach) so the 19 pre-existing tests never
+    // observe a non-zero scrollHeight.
+    beforeEach(() => {
+      Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+        configurable: true,
+        get: () => 1000,
+      });
+    });
+
+    afterEach(() => {
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollHeight;
+    });
+
+    it("re-pins the message list to the newest message after collapse then expand", async () => {
+      const user = userEvent.setup();
+      render(<ChatPanel />);
+
+      await waitFor(() => expect(screen.getByTestId("chat-messages")).toBeInTheDocument());
+
+      await user.click(screen.getByTestId("chat-toggle"));
+      await user.click(screen.getByTestId("chat-toggle"));
+
+      expect(screen.getByTestId("chat-messages").scrollTop).toBe(1000);
+    });
+  });
 });
