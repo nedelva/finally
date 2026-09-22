@@ -132,7 +132,7 @@ class TestMassiveDataSource:
         cache = PriceCache()
         source = MassiveDataSource(api_key="test-key", price_cache=cache, poll_interval=60.0)
 
-        with patch("app.market.massive_client.RESTClient"):
+        with patch("massive.RESTClient"):
             with patch.object(source, "_fetch_snapshots", return_value=[]):
                 await source.start(["aapl"])
 
@@ -185,7 +185,7 @@ class TestMassiveDataSource:
         source = MassiveDataSource(api_key="test-key", price_cache=cache, poll_interval=10.0)
 
         # Mock the client and start
-        with patch("app.market.massive_client.RESTClient"):
+        with patch("massive.RESTClient"):
             with patch.object(source, "_fetch_snapshots", return_value=[]):
                 await source.start(["AAPL"])
 
@@ -204,7 +204,7 @@ class TestMassiveDataSource:
 
         mock_snapshots = [_make_snapshot("AAPL", 190.50, 1707580800000)]
 
-        with patch("app.market.massive_client.RESTClient"):
+        with patch("massive.RESTClient"):
             with patch.object(source, "_fetch_snapshots", return_value=mock_snapshots):
                 await source.start(["AAPL"])
 
