@@ -205,12 +205,12 @@ Plans:
   3. Start and stop scripts are safe to run repeatedly — no duplicate containers, no error on a second stop, and stopping never destroys the data volume
   4. The application runs correctly with only `OPENROUTER_API_KEY` set, falling back to the built-in simulator because no Massive key is present
 
-**Plans**: 5 plans
+**Plans**: 1/5 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — TRACER: `.dockerignore`, the two-stage `Dockerfile` with build-time path-arithmetic assertions, non-root runtime, and `.env.example` — one `docker run` reaches the working app on port 8000
+- [x] 05-01-PLAN.md — TRACER: `.dockerignore`, the two-stage `Dockerfile` with build-time path-arithmetic assertions, non-root runtime, and `.env.example` — one `docker run` reaches the working app on port 8000
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -241,7 +241,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
 | 4. AI Copilot | 3/3 | Complete    | 2026-09-22 |
-| 5. One-Command Delivery | 0/5 | Planned | - |
+| 5. One-Command Delivery | 1/5 | In Progress|  |
 
 ---
 *Roadmap created: 2026-09-17*
