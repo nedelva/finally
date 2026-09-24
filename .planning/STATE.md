@@ -126,9 +126,10 @@ None yet.
 [Issues that affect future work]
 
 - Seed prices in `backend/app/market/seed_prices.py` are stale (NVDA 800, MSFT 420); simulator demos will look dated until refreshed.
-- `.env.example` does not exist; `OPENROUTER_API_KEY` is required from Phase 4 onward.
-- Cache version-counter-skipped-on-empty-cache bug and daily-vs-tick-to-tick % change spec mismatch (`.planning/codebase/CONCERNS.md`) remain unfixed — deferred to whichever future phase touches that code path.
+- Cache version-counter-skipped-on-empty-cache bug and daily-vs-tick-to-tick % change spec mismatch (`.planning/codebase/CONCERNS.md`) remain unfixed — no phase through 5 touched that code path.
 - [Phase 3] Mobile tap-target confirmation for trade bar controls and a local validation-copy string outside the Copywriting Contract remain open (03-UI-REVIEW.md fixes #2/#3) — advisory, non-blocking.
+- [Phase 5] `MassiveDataSource._poll_once()` reads `snap.last_trade.timestamp`, which doesn't exist on the installed `massive==2.2.0` model (real field is `sip_timestamp`) — silently drops every snapshot on the optional real-market-data path. Pre-existing, not introduced by any shipped phase; deferred by user decision during 05-REVIEW.md closeout. Default simulator path unaffected.
+- [Phase 5] `scripts/start_mac.sh`/`start_windows.ps1`'s `--build` flag doesn't force-recreate an already-running container — a rebuilt image has no effect until the container is stopped first (05-REVIEW.md WR-01).
 
 ### Quick Tasks Completed
 
@@ -146,6 +147,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-21T08:22:08.230Z
-Stopped at: Phase 05 complete — all phases complete
-Resume file: /Users/valeriu/AICourses/finally/.planning/phases/04-ai-copilot/04-CONTEXT.md
+Last session: 2026-09-24T11:50:00.000Z
+Stopped at: Phase 5 complete, milestone v1 100% complete (5/5 phases, 22/22 plans) — ready for /gsd-complete-milestone
+Resume file: None
