@@ -205,7 +205,7 @@ Plans:
   3. Start and stop scripts are safe to run repeatedly — no duplicate containers, no error on a second stop, and stopping never destroys the data volume
   4. The application runs correctly with only `OPENROUTER_API_KEY` set, falling back to the built-in simulator because no Massive key is present
 
-**Plans**: 3/5 plans executed
+**Plans**: 5/5 plans executed
 
 Plans:
 **Wave 1**
@@ -219,8 +219,8 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-02-PLAN.md — Operator lifecycle: four idempotent start/stop scripts, `docker-compose.yml`, README launch paths, and the restart-persistence proof
-- [ ] 05-05-PLAN.md — Remaining E2E scenarios: watchlist, trading, portfolio visuals, mocked chat, and SSE reconnect
+- [x] 05-02-PLAN.md — Operator lifecycle: four idempotent start/stop scripts, `docker-compose.yml`, README launch paths, and the restart-persistence proof
+- [x] 05-05-PLAN.md — Remaining E2E scenarios: watchlist, trading, portfolio visuals, mocked chat, and SSE reconnect
 
 **Scope notes** (work with no REQ ID that must land here):
 
@@ -241,7 +241,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Persistent Watchlist | 5/5 | Complete    | 2026-09-19 |
 | 3. Trading & Portfolio | 4/4 | Complete    | 2026-09-20 |
 | 4. AI Copilot | 3/3 | Complete    | 2026-09-22 |
-| 5. One-Command Delivery | 3/5 | In Progress|  |
+| 5. One-Command Delivery | 5/5 | In Progress|  |
 
 ---
 *Roadmap created: 2026-09-17*
