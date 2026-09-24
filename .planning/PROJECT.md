@@ -26,36 +26,41 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 - ✓ Portfolio REST API: `GET /api/portfolio`, `POST /api/portfolio/trade`, `GET /api/portfolio/history`, per PLAN.md §8 — Phase 3
 - ✓ Trading engine: atomic SQLite buy/sell fills, `BEGIN IMMEDIATE` write-lock, `math.isfinite()` quantity guard, post-trade + 30s periodic `portfolio_snapshots` — Phase 3
 - ✓ Frontend portfolio UI: trade bar, live header cash/total-value, positions table, P&L-colored heatmap with click-to-select, P&L chart with pre-first-tick bootstrap point — per PLAN.md §10 — Phase 3
+- ✓ LLM chat integration: `POST /api/chat` via LiteLLM → OpenRouter (Cerebras inference, `openrouter/openai/gpt-oss-120b`), structured-output trade/watchlist auto-execution, `LLM_MOCK` mode for tests, per PLAN.md §9 — Phase 4
+- ✓ AI chat panel UI (Next.js static export, Tailwind dark theme), inline trade/watchlist-change confirmation pills, persisted chat history — per PLAN.md §10 — Phase 4
+- ✓ Docker packaging: two-stage Dockerfile (build-time path assertions, non-root runtime user, no secrets/DB in image layers), `.env.example`, zero-key simulator fallback — per PLAN.md §11 — Phase 5
+- ✓ Idempotent operator lifecycle: `scripts/start_mac.sh`/`stop_mac.sh` (bash), `start_windows.ps1`/`stop_windows.ps1` (PowerShell), `docker-compose.yml` as a third equivalent encoding — never destroys the `finally-data` volume, verified restart-persistence round trip against a real Docker daemon — Phase 5
+- ✓ Production dependency hygiene: `rich` demoted to a `demo` extra, `massive` SDK import made lazy so the default simulator path no longer depends on it at module load — Phase 5
+- ✓ E2E test suite (Playwright, `LLM_MOCK=true`, sequential/non-parallel) covering fresh-start, watchlist, trading, portfolio viz, chat, and SSE reconnect — 6 spec files, 10 tests, run via `docker compose -f test/docker-compose.test.yml up --build` — per PLAN.md §12 — Phase 5
 
 (See `.planning/codebase/ARCHITECTURE.md` and `STACK.md` for full detail on what's built. `planning/MARKET_DATA_SUMMARY.md` is the original component summary.)
 
 ### Active
 
-- [ ] LLM chat integration: `POST /api/chat` via LiteLLM → OpenRouter (Cerebras inference, `openrouter/openai/gpt-oss-120b`), structured-output trade/watchlist auto-execution, `LLM_MOCK` mode for tests, per PLAN.md §9
-- [ ] AI chat panel UI (Next.js static export, Tailwind dark theme) — per PLAN.md §10
-- [ ] Docker packaging: multi-stage Dockerfile, start/stop scripts (mac + Windows), volume-mounted SQLite — per PLAN.md §11
-- [ ] E2E test suite (Playwright, `LLM_MOCK=true`) per PLAN.md §12
-- [ ] Version-counter-skipped-on-empty-cache bug, daily-vs-tick-to-tick % change spec mismatch — see `.planning/codebase/CONCERNS.md` (router singleton fixed in Phase 1)
-- [ ] Mobile tap-target confirmation for trade bar controls and stale local-validation copy outside the Copywriting Contract — see 03-UI-REVIEW.md fixes #2/#3 (advisory, non-blocking)
+None — all `planning/PLAN.md` requirements (MKT, WTCH, TRADE, CHAT, OPS) are shipped and validated as of Phase 5. See Out of Scope / Context below for known non-blocking residue.
 
 ### Out of Scope
 
+**Deliberate design non-goals:**
 - User accounts / login / multi-user auth — single hardcoded `user_id="default"` throughout, per PLAN.md §7
 - Limit orders, order book, partial fills — market orders only, instant fill, per PLAN.md §2/§6
 - Postgres or any external DB server — SQLite only, per PLAN.md §3
 - Trade confirmation dialogs or fees — deliberate zero-friction design for the AI-driven demo, per PLAN.md §9
 - Cloud deployment automation (Terraform/App Runner) — explicitly a stretch goal, not core build, per PLAN.md §11
 
+**Known residue, carried forward, non-blocking (no phase ever revisited these code paths):**
+- Version-counter-skipped-on-empty-cache bug, daily-vs-tick-to-tick % change spec mismatch — see `.planning/codebase/CONCERNS.md` (router singleton fixed in Phase 1; these two remain unaddressed through Phase 5)
+- Mobile tap-target confirmation for trade bar controls and stale local-validation copy outside the Copywriting Contract — see 03-UI-REVIEW.md fixes #2/#3
+- `MassiveDataSource._poll_once()` reads `snap.last_trade.timestamp`, which does not exist on the installed `massive==2.2.0` `LastTrade` model (real field is `sip_timestamp`) — every snapshot silently drops, so the *optional* real-market-data path (`MASSIVE_API_KEY` set) delivers no prices. Traced to a pre-Phase-5 commit, not introduced by any shipped phase. Does not affect the default GBM simulator path. Flagged CR-01 in `05-REVIEW.md`, user chose to defer rather than fix in-phase.
+- `scripts/start_mac.sh` / `start_windows.ps1`'s `--build`/`-Build` flag doesn't force-recreate an already-running container, so a rebuilt image silently has no effect until the container is stopped first — WR-01 in `05-REVIEW.md`, deferred alongside CR-01
+
 ## Context
 
-- **Prior work:** The market-data component (`backend/app/market/`) was built and reviewed in an earlier milestone (see `planning/archive/` and `planning/MARKET_DATA_SUMMARY.md`). It is solid in isolation (84% test coverage) but was never wired into a real FastAPI application — there is currently no `app = FastAPI()` entrypoint, no Docker config, and no DB, portfolio, watchlist, or LLM code anywhere in the repo.
-- **Frontend state:** `frontend/` currently contains only Next.js scaffolding (`lib/`, `next-env.d.ts`, build output in `out/`) — no application UI has been built yet.
-- **Test state:** `test/` (Playwright E2E) has only `node_modules/` installed — no tests written yet.
-- **Codebase map:** Full technical detail lives in `.planning/codebase/` (STACK.md, ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, INTEGRATIONS.md, CONCERNS.md), generated via `/gsd-map-codebase` immediately before this PROJECT.md was written.
-- **Known backend gaps** (from `.planning/codebase/CONCERNS.md`), to be fixed opportunistically while building the API layer rather than as a dedicated phase:
-  - `backend/app/market/stream.py` declares its `APIRouter` at module level; the factory decorates handlers onto this shared singleton, so calling it twice would double-register routes.
-  - Cache version counter can be skipped when the cache is empty.
-  - Spec ambiguity between daily % change and tick-to-tick % change in `PriceUpdate`.
+**Milestone complete (2026-09-24):** all 5 phases shipped. `docker build -t finally . && ./scripts/start_mac.sh` (or `start_windows.ps1`, or `docker compose up -d`) brings up the full workstation at `http://localhost:8000` — streaming watchlist, trading, AI chat copilot, portfolio persisted across restarts. 224 backend tests + 158 frontend tests + 10 Playwright E2E tests, all green. `05-VERIFICATION.md` independently re-proved all four Phase 5 success criteria against real Docker containers.
+
+- **Origin:** The market-data component (`backend/app/market/`) was built and reviewed in an earlier milestone (see `planning/archive/` and `planning/MARKET_DATA_SUMMARY.md`) before this milestone wired it into a real FastAPI application, added the DB/portfolio/watchlist/LLM layers, and packaged it for one-command delivery.
+- **Codebase map:** Full technical detail lives in `.planning/codebase/` (STACK.md, ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, INTEGRATIONS.md, CONCERNS.md) — current as of Phase 5's own audits (`05-VALIDATION.md`, `05-SECURITY.md`, `05-REVIEW.md`).
+- **Known backend gaps carried through to milestone close** (see Out of Scope above for full detail): the original router-singleton bug was fixed in Phase 1; the version-counter-skipped-on-empty-cache bug and the daily-vs-tick-to-tick % change spec mismatch were never revisited and remain open; a new pre-existing bug (CR-01, `MassiveDataSource` reading a nonexistent SDK attribute) was found and deliberately deferred during Phase 5 closeout.
 
 ## Constraints
 
@@ -75,6 +80,11 @@ The user can watch live prices stream, place simulated trades, and have an AI as
 | `workflow.use_worktrees` set to `false` for the project (Phase 3 execution) | Claude Code's worktree isolation forks from `origin/HEAD`, which kept lagging behind local `HEAD` mid-phase with no push in the loop; every wave's worktree would have missed the phase's own plan files | ✓ Good — re-enabled after the branch was merged into `main` and local caught back up |
 | Trade quantity validated with `math.isfinite()`, not just `> 0`; `execute_trade`'s transaction opens with `BEGIN IMMEDIATE` | Phase 3 code review found a `NaN` quantity crashed the trade endpoint with an unhandled 500 (comparisons against `NaN` are always `False`), and a read-then-write race window across concurrent trades | ✓ Good — both independently reproduced pre-fix and re-verified post-fix |
 | The `03-VALIDATION.md` and `03-SECURITY.md` drafts (authored at plan time, before code existed) were corrected in place rather than treated as fresh audits | One planned test name (`test_get_portfolio_fresh_db`) never matched the executor's actual name; the underlying coverage existed, only the draft's guess was stale | ✓ Good — 12/12 mapped commands re-verified green, `threats_open: 0` |
+| Phase 4: `litellm` and `pydantic` (both SUS-flagged by the Package Legitimacy Audit) approved after human review of PyPI/GitHub provenance; `get_chat_response` wraps the LLM call and JSON parse in one try/except so the route never raises on a malformed model response | Blocking human checkpoint per protocol; degrade-to-readable-message is safer than a 500 on an LLM integration | ✓ Good |
+| Phase 4: removing a watchlist ticker with an open position now blocks (Phase 4 D-01 supersedes the Phase 3 03-01 truth that allowed it), enforced once in `remove_watchlist_ticker()` so both the manual DELETE route and the new chat-dispatch path inherit it identically | Chat gave the AI a second way to remove a watched ticker; the guard needed to live below both entry points, not be duplicated in each | ✓ Good — no previously-passing test broken |
+| Phase 5: local `main` was pushed to `origin/main` (17 commits) mid-phase, before dispatching Wave 3's executors | Claude Code's `isolation="worktree"` forks from `origin/HEAD`; local had drifted 17 commits ahead with no push in the loop, which would have forced sequential execution directly on the protected `main` branch (executor's own commit guard refuses to commit on a protected branch without `git.allow_default_branch_commits: true`). Pushing restored `origin/HEAD == HEAD`, and worktree isolation resumed normally — same pattern as the Phase 3 decision above, this time resolved by pushing rather than disabling worktrees. | ✓ Good — both Wave 3 plans executed in real parallel worktrees as designed |
+| Phase 5: `docker-compose.yml`'s named volume pinned explicitly (`name: finally-data`) rather than left to Compose's default project-name-prefixed naming | Compose's default naming is derived from the containing directory name, which differs between the worktree checkout and the operator's real checkout — would have silently mounted a second, empty volume, contradicting the "same store either way" requirement | ✓ Good — caught and fixed during 05-02 execution, re-verified against a real Docker daemon |
+| Phase 5: `MassiveDataSource._poll_once()`'s `snap.last_trade.timestamp` bug (CR-01, pre-existing, not introduced by any shipped phase) left unfixed | User chose "defer and continue" when code review surfaced it during Phase 5 closeout — doesn't affect the default simulator path the milestone's success criteria depend on | — Deferred, tracked in Out of Scope |
 
 ## Evolution
 
@@ -94,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-20 after Phase 3*
+*Last updated: 2026-09-24 after Phase 5 (milestone complete — all phases shipped)*
