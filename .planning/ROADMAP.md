@@ -195,7 +195,6 @@ Plans:
 ### Phase 5: One-Command Delivery
 
 **Goal**: Someone who has never seen the repo runs one command and gets the whole workstation on port 8000, with their portfolio and history still there after a restart
-**Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: OPS-01, OPS-02
 **Success Criteria** (what must be TRUE):
