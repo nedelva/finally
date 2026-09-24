@@ -1,0 +1,24 @@
+# FinAlly — convenience wrapper around the production run contract.
+#
+# This file uses a NAMED, PERSISTENT store (finally-data), deliberately the
+# opposite of test/docker-compose.test.yml's disposable per-run filesystem,
+# because init_db() seeds default data only while users_profile is empty —
+# reusing that seed-once behavior across every test run would leave stale
+# state behind. This compose file is a convenience wrapper, explicitly not
+# a second source of truth: the image, mount path, port, and env-file
+# source are authored once in the Dockerfile/README and reproduced here
+# verbatim.
+services:
+  app:
+    build: .
+    container_name: finally
+    ports:
+      - "8000:8000"
+    volumes:
+      - finally-data:/app/db
+    env_file:
+      - .env
+
+volumes:
+  finally-data:
+    name: finally-data

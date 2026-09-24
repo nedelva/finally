@@ -37,6 +37,43 @@ docker run -v finally-data:/app/db -p 8000:8000 --env-file .env finally
 # Open http://localhost:8000
 ```
 
+## Running FinAlly
+
+There are three equivalent ways to start FinAlly — all reach the same image, the same
+`finally-data` persistent store, and the same port 8000:
+
+**Raw Docker:**
+
+```bash
+docker build -t finally .
+docker run -v finally-data:/app/db -p 8000:8000 --env-file .env finally
+```
+
+**macOS / Linux script:**
+
+```bash
+./scripts/start_mac.sh   # builds if needed, starts (or creates) the container, waits until ready
+./scripts/stop_mac.sh    # stops and removes the container only
+```
+
+**Windows PowerShell script:**
+
+```powershell
+.\scripts\start_windows.ps1
+.\scripts\stop_windows.ps1
+```
+
+**Docker Compose:**
+
+```bash
+docker compose up -d
+docker compose stop
+```
+
+Stopping FinAlly — by any of these paths — never discards data. The `finally-data` store
+persists across every start/stop/restart cycle; the only way to reset to a fresh $10,000
+portfolio is to explicitly remove it (`docker volume rm finally-data`).
+
 ## Environment Variables
 
 | Variable | Required | Description |

@@ -41,7 +41,7 @@ Requirements for initial release. Each maps to roadmap phases. Derived directly 
 ### Ops
 
 - [ ] **OPS-01**: Operator can start the full application with a single Docker command (or provided start/stop script) and reach it at `http://localhost:8000`
-- [ ] **OPS-02**: Operator's portfolio, watchlist, and trade history persist across container restarts via a volume-mounted SQLite database
+- [x] **OPS-02**: Operator's portfolio, watchlist, and trade history persist across container restarts via a volume-mounted SQLite database
 
 ## v2 Requirements
 
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-05 | Phase 4 | Complete |
 | CHAT-06 | Phase 4 | Complete |
 | OPS-01 | Phase 5 | Pending |
-| OPS-02 | Phase 5 | Pending |
+| OPS-02 | Phase 5 | Complete |
 
 **Coverage:**
 
