@@ -165,6 +165,12 @@ None - no external service configuration required beyond the existing `OPENROUTE
 - OPS-01 remains open: it is also declared by sibling plan `05-05`, which has not yet produced a SUMMARY. No action needed from this plan; the shared-ID gate will mark OPS-01 complete automatically once 05-05 finishes.
 - A real Docker daemon on this host now has a `finally` image, a `finally-data` volume (containing a live AAPL position, SOFI watchlist entry, and one chat message from this plan's verification), and no running container (the compose test container was stopped and removed as part of Task 3's own verification cleanup). Whoever runs the phase's final E2E/ship gate should be aware `finally-data` is not pristine — it carries this plan's test data, not a fresh $10,000 portfolio.
 
+## Self-Check: PASSED
+
+- All 6 key files confirmed present on disk (`scripts/start_mac.sh`, `scripts/stop_mac.sh`, `scripts/start_windows.ps1`, `scripts/stop_windows.ps1`, `docker-compose.yml`, this SUMMARY).
+- All 4 commit hashes (`a4a68c6`, `7158cf1`, `803651a`, and this SUMMARY's own commit) confirmed present in `git log`.
+- Plan-level `<verification>` re-confirmed: idempotent bash scripts, non-destructive stop (both platforms), real restart-persistence round trip, PowerShell literal parity, and `docker compose up -d` reaching the same persisted store.
+
 ---
 *Phase: 05-one-command-delivery*
 *Completed: 2026-09-24*
