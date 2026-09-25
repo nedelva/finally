@@ -19,10 +19,10 @@ current_phase: 05
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-20)
+See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** The user can watch live prices stream, place simulated trades, and have an AI assistant that can see the portfolio and act on it in natural language — all in one dependency-free `docker run`.
-**Current focus:** Phase 05 — One-Command Delivery
+**Current focus:** Planning next milestone (run `/gsd-new-milestone`)
 
 ## Current Position
 
