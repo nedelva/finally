@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "DATA_START\nWhen the backend is unreachable and the initial GET /api/watchlist fetch fails, the watchlist panel shows no visible error message to the user — it just renders as an empty watchlist indistinguishable from \"no tickers configured.\" Confirmed during UAT for phase 02 (persistent watchlist); flagged in 02-VERIFICATION.md as a confirmed code gap, not a hypothesis. Feeds gap G-02-3 in .planning/phases/02-persistent-watchlist/02-UAT.md. Goal: find_root_cause_only, do not fix.\nDATA_END"
 created: 2026-09-19T00:00:00Z
 updated: 2026-09-19T00:00:00Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-25
+  status: diagnosed
 ---
 
 ## Current Focus

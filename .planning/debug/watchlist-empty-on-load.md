@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "DATA_START\nOn loading the app in a browser (http://localhost:8000), the watchlist panel shows no tickers at all — not a brief loading flicker, but a persistently empty grid after the page has settled. Reported during UAT for phase 02 (persistent watchlist). This feeds gap G-02-1 in .planning/phases/02-persistent-watchlist/02-UAT.md. Goal: find_root_cause_only, do not fix.\nDATA_END"
 created: 2026-09-19T09:26:37Z
 updated: 2026-09-19T09:26:37Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-25
+  status: diagnosed
 ---
 
 ## Current Focus
@@ -154,6 +158,7 @@ root_cause: |
   proven trigger for either G-02-1 or G-02-2.
 
 fix: NOT APPLIED — goal is find_root_cause_only per task instructions. A fix would need to touch:
+
   - frontend/components/Watchlist.tsx — read and render useWatchlist()'s `error` (and ideally `loading`)
     state, so a failed fetch is visually distinct from a legitimately empty watchlist (this is G-02-3's fix
     too).

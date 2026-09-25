@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 05
-status: completed
+status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-24T12:56:02.723Z"
-last_activity: 2026-09-24
-last_activity_desc: Phase 05 complete
-state_head: 95fb0382048ec31bc927581e8a2562a507e1c219
+last_updated: "2026-09-25T14:35:03.206Z"
+last_activity: 2026-09-25
+last_activity_desc: Milestone v1.0 completed and archived
+state_head: c13396933b9df636e607c43fd017ba2d63e73207
 progress:
   total_phases: 5
   completed_phases: 5
   total_plans: 22
   completed_plans: 22
   percent: 100
+current_phase: 05
 ---
 
 # Project State
@@ -26,12 +26,10 @@ See: .planning/PROJECT.md (updated 2026-09-20)
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-09-24 — Phase 05 complete
-
-Progress: [██████████] 100%
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-25 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -135,7 +133,6 @@ None yet.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260922-ljr | Fix the 3 UI blockers from 04-UI-REVIEW.md: scroll-to-bottom regression on collapse/expand, sidebar overflow hiding the chat form, missing UI-SPEC line-heights | 2026-09-22 | 1444693 | [260922-ljr-fix-the-3-ui-blockers-from-planning-phas](./quick/260922-ljr-fix-the-3-ui-blockers-from-planning-phas/) |
 
 ## Deferred Items
 
@@ -143,6 +140,11 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
+| debug_sessions | add-ticker-405-g02-2 | diagnosed | 2026-09-25 | v1.0 |
+| debug_sessions | remove-button-hit-area-g02-4 | diagnosed | 2026-09-25 | v1.0 |
+| debug_sessions | watchlist-empty-on-load | diagnosed | 2026-09-25 | v1.0 |
+| debug_sessions | watchlist-load-error-silent | diagnosed | 2026-09-25 | v1.0 |
+| debug_sessions | watchlist-scroll-chart-height-g02-5 | diagnosed | 2026-09-25 | v1.0 |
 | Deployment | DEPL-01: one-command cloud deploy (Terraform/App Runner) | v2 | 2026-09-17 | v1 |
 
 ## Session Continuity
@@ -150,3 +152,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 Last session: 2026-09-24T11:50:00.000Z
 Stopped at: Phase 5 complete, milestone v1 100% complete (5/5 phases, 22/22 plans) — ready for /gsd-complete-milestone
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

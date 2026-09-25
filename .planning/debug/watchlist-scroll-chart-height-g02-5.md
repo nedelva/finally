@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "Layout bug in FinAlly phase 02-persistent-watchlist, tracked as gap G-02-5 (major) in .planning/phases/02-persistent-watchlist/02-UAT.md: watchlist panel has no internal scroll (page scrolls instead when many tickers are added), AND the main chart's height appears coupled to the watchlist panel's height, growing along with it."
 created: 2026-09-19T10:54:13Z
 updated: 2026-09-19T10:54:13Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-25
+  status: diagnosed
 ---
 
 ## Current Focus

@@ -54,9 +54,23 @@ None — all `planning/PLAN.md` requirements (MKT, WTCH, TRADE, CHAT, OPS) are s
 - `MassiveDataSource._poll_once()` reads `snap.last_trade.timestamp`, which does not exist on the installed `massive==2.2.0` `LastTrade` model (real field is `sip_timestamp`) — every snapshot silently drops, so the *optional* real-market-data path (`MASSIVE_API_KEY` set) delivers no prices. Traced to a pre-Phase-5 commit, not introduced by any shipped phase. Does not affect the default GBM simulator path. Flagged CR-01 in `05-REVIEW.md`, user chose to defer rather than fix in-phase.
 - `scripts/start_mac.sh` / `start_windows.ps1`'s `--build`/`-Build` flag doesn't force-recreate an already-running container, so a rebuilt image silently has no effect until the container is stopped first — WR-01 in `05-REVIEW.md`, deferred alongside CR-01
 
+## Current State
+
+**v1.0 MVP shipped 2026-09-25** (tag `v1.0`). `docker build -t finally . && ./scripts/start_mac.sh` (or `start_windows.ps1`, or `docker compose up -d`) brings up the full workstation at `http://localhost:8000` — streaming watchlist, trading, AI chat copilot, portfolio persisted across restarts. 224 backend tests + 158 frontend tests + 10 Playwright E2E tests, all green. `05-VERIFICATION.md` independently re-proved all four Phase 5 success criteria against real Docker containers. Phase artifacts archived to `.planning/milestones/v1.0-phases/`; roadmap/requirements archived to `.planning/milestones/v1.0-ROADMAP.md` / `v1.0-REQUIREMENTS.md`.
+
+## Next Milestone Goals
+
+No fresh requirements defined yet — run `/gsd-new-milestone` to scope v1.1. Candidates surfaced by v1.0's known residue (not pre-decided, just visible from this milestone's Out of Scope / Blockers list):
+
+- Fix `MassiveDataSource._poll_once()`'s `snap.last_trade.timestamp` bug (CR-01) so the optional real-market-data path actually delivers prices
+- Fix `--build`/`-Build` not force-recreating an already-running container (WR-01)
+- Mobile tap-target sizing and stale validation copy in the trade bar (03-UI-REVIEW.md #2/#3)
+- Version-counter-skipped-on-empty-cache and daily-vs-tick-to-tick % change spec mismatch (pre-existing, never touched through Phase 5)
+- DEPL-01: one-command cloud deployment (Terraform/App Runner) — explicit v2 stretch goal in REQUIREMENTS.md
+
 ## Context
 
-**Milestone complete (2026-09-24):** all 5 phases shipped. `docker build -t finally . && ./scripts/start_mac.sh` (or `start_windows.ps1`, or `docker compose up -d`) brings up the full workstation at `http://localhost:8000` — streaming watchlist, trading, AI chat copilot, portfolio persisted across restarts. 224 backend tests + 158 frontend tests + 10 Playwright E2E tests, all green. `05-VERIFICATION.md` independently re-proved all four Phase 5 success criteria against real Docker containers.
+**Milestone complete (2026-09-24):** all 5 phases shipped. See Current State above for the live-system summary.
 
 - **Origin:** The market-data component (`backend/app/market/`) was built and reviewed in an earlier milestone (see `planning/archive/` and `planning/MARKET_DATA_SUMMARY.md`) before this milestone wired it into a real FastAPI application, added the DB/portfolio/watchlist/LLM layers, and packaged it for one-command delivery.
 - **Codebase map:** Full technical detail lives in `.planning/codebase/` (STACK.md, ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, INTEGRATIONS.md, CONCERNS.md) — current as of Phase 5's own audits (`05-VALIDATION.md`, `05-SECURITY.md`, `05-REVIEW.md`).
@@ -74,8 +88,8 @@ None — all `planning/PLAN.md` requirements (MKT, WTCH, TRADE, CHAT, OPS) are s
 |----------|-----------|---------|
 | `planning/PLAN.md` remains the single authoritative spec; PROJECT.md tracks scope/status against it rather than re-deriving vision | Spec is already comprehensive and was confirmed unchanged during project init questioning | ✓ Good |
 | Codebase mapped via `/gsd-map-codebase` before defining requirements | Existing market-data backend needed to be understood precisely (what's built vs. what CONCERNS.md flags as gaps) before scoping the roadmap | ✓ Good |
-| Known market-data backend gaps (router singleton, version-counter bug, % change spec mismatch) folded into the upcoming API-layer phase rather than a dedicated cleanup phase | User's explicit choice during init questioning — fix while wiring, don't block on a separate pass | — Pending |
-| No scope changes from PLAN.md; build in dependency order (DB → API/portfolio → frontend → LLM chat → Docker) | User confirmed no priority changes during init questioning | — Pending |
+| Known market-data backend gaps (router singleton, version-counter bug, % change spec mismatch) folded into the upcoming API-layer phase rather than a dedicated cleanup phase | User's explicit choice during init questioning — fix while wiring, don't block on a separate pass | ⚠️ Partial — router singleton fixed in Phase 1; version-counter-skipped-on-empty-cache and daily-vs-tick-to-tick % change mismatch never revisited through Phase 5, carried as known residue |
+| No scope changes from PLAN.md; build in dependency order (DB → API/portfolio → frontend → LLM chat → Docker) | User confirmed no priority changes during init questioning | ✓ Good — all 5 phases shipped in exactly this order, zero PLAN.md scope changes |
 | Watchlist remove-button hit target sized to ~24x24px with a permanent (not hover-only) background affordance, and the watchlist panel bounded with internal scroll decoupled from main-chart height | UAT surfaced both as real usability gaps (sub-24px WCAG-violating hit box; unbounded panel driving page scroll and stretching the chart) — fixed in gap-closure plan 02-05, reconfirmed live | ✓ Good |
 | `workflow.use_worktrees` set to `false` for the project (Phase 3 execution) | Claude Code's worktree isolation forks from `origin/HEAD`, which kept lagging behind local `HEAD` mid-phase with no push in the loop; every wave's worktree would have missed the phase's own plan files | ✓ Good — re-enabled after the branch was merged into `main` and local caught back up |
 | Trade quantity validated with `math.isfinite()`, not just `> 0`; `execute_trade`'s transaction opens with `BEGIN IMMEDIATE` | Phase 3 code review found a `NaN` quantity crashed the trade endpoint with an unhandled 500 (comparisons against `NaN` are always `False`), and a read-then-write race window across concurrent trades | ✓ Good — both independently reproduced pre-fix and re-verified post-fix |
@@ -104,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-24 after Phase 5 (milestone complete — all phases shipped)*
+*Last updated: 2026-09-25 after v1.0 milestone close*

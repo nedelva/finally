@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "UAT gap G-02-4 (phase 02-persistent-watchlist, minor severity): watchlist row remove (×) button is hard to click — user reported it's \"too small and require very precise positioning of the mouse cursor and sometimes it needs two-three clicks until is triggered,\" confirmed via DevTools it is an actual <button>, and requested styling that makes it \"stand out from the surrounding background.\""
 created: 2026-09-19T00:00:00Z
 updated: 2026-09-19T00:00:00Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-25
+  status: diagnosed
 ---
 
 ## Current Focus

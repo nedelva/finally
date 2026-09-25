@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "Submitting the add-ticker form in the browser (http://localhost:8000) returns an HTTP 405 (Method Not Allowed) instead of adding the ticker. Reported during UAT for phase 02 (persistent watchlist), gap G-02-2. Per spec, POST /api/watchlist with body {ticker} should add a ticker."
 created: 2026-09-19T09:24:00Z
 updated: 2026-09-19T09:30:00Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-25
+  status: diagnosed
 ---
 
 ## Current Focus
